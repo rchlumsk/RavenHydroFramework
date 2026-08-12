@@ -589,7 +589,7 @@ void CEnthalpyModel::Initialize(const optStruct& Options)
       ExitGracefully("CEnthalpyModel::Initialize: non-headwater subbasin missing reach HRU index for temperature simulation",BAD_DATA);
     }
   }
-  //  int  m=_pTransModel->GetLayerIndexFromName2("!TEMPERATURE_SOIL",2);
+  //  int  m=_pTransModel->GetLayerIndexFromName2("!TEMPERATURE|SOIL",2);
   //  ExitGracefullyIf(m==DOESNT_EXIST,"UpdateReachEnergySourceTerms: must have 3 layers",BAD_DATA_WARN);
 
   // update beta & source matrices

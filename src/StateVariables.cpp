@@ -423,7 +423,7 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   {
     layer_index = _pTransportModel->GetLayerIndexFromName2(tmp, layer_index);
     if (layer_index==DOESNT_EXIST){typ=UNRECOGNIZED_SVTYPE;}
-  }
+  } 
 
   if ((strict) && (typ==UNRECOGNIZED_SVTYPE)){
     cout<<tmp<<endl;
@@ -516,6 +516,7 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
     //Transport variables
     case(CONSTITUENT):    {
       name = "!" + this->_pTransportModel->GetConstituentTypeName(layerindex); //e.g., !Nitrogen[3]
+      //overridden below 
       break;
     }
     case(CONSTITUENT_SRC):    {
@@ -542,20 +543,24 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
       break;
     }
   }
-  //multilayer variables
-  if ((typ==SOIL) || (typ==SOIL_TEMP)   ||
-    (typ==CONVOLUTION) || (typ==CONV_STOR) || (typ==LATERAL_EXCHANGE))
+  if(typ==CONSTITUENT) //e.g., !Nitrogen|SOIL[0]
   {
-    name=name+"["+to_string(layerindex)+"]";
-  }
-  else if (typ==CONSTITUENT){
     int iWat=this->_pTransportModel->GetWaterStorIndexFromLayer(layerindex);
     sv_type typ=_pModel->GetStateVarType(iWat);
     int lay=_pModel->GetStateVarLayer(iWat);
     string Wat=SVTypeToString(typ,lay);
-    name=name+"_"+Wat;
+    name=name+"|"+Wat;
   }
-  if (((typ==SNOW) || (typ==SNOW_LIQ) || (typ==COLD_CONTENT) || (typ==GROUNDWATER)) && (layerindex>0)){
+  //always multilayer variables
+  if ((typ==SOIL) || (typ==SOIL_TEMP)   ||
+      (typ==CONVOLUTION) || (typ==CONV_STOR) || (typ==LATERAL_EXCHANGE))
+  {
+    name=name+"["+to_string(layerindex)+"]";
+  }
+  //sometimes multilayer variables
+  else if ((layerindex>0) && ((typ==SNOW) || (typ==SNOW_LIQ) || (typ==COLD_CONTENT) || 
+           (typ==GROUNDWATER) || (typ==DEPRESSION)) )
+  {
     name=name+"["+to_string(layerindex)+"]";
   }
   return name;

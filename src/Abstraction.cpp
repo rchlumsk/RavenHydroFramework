@@ -207,7 +207,7 @@ double HGDMcontrib_fraction(const double &current_storage,
     {
       vf2 = vf1 + (1.0 - cf1 ) *  (delta_storage / max_storage);
       if (vf1 < 0.999) {
-        cf2 = (((1.0 - cf1) * (vf2 - vf1)) / (1.0 - vf1)) + cf1;
+        cf2 = cf1+ (((1.0 - cf1) * (vf2 - vf1)) / (1.0 - vf1));
         cf2 = min(max(min(cf2, vf2), 0.0), 1.0);
       }
       else {

@@ -1557,8 +1557,8 @@ bool CDemandOptimizer::EvaluateConditionExp(const expressionStruct* pE,const dou
 
   if      (fabs(RHSminusLHS-RAV_BLANK_DATA)<REAL_SMALL) {return true;}//condition assumed satisfied if no data in conditional
   if      (pE->compare==COMPARE_IS_EQUAL)               {return (fabs(RHSminusLHS)<REAL_SMALL);}
-  else if (pE->compare==COMPARE_LESSTHAN)               {return (RHSminusLHS>0);}
-  else if (pE->compare==COMPARE_GREATERTHAN)            {return (RHSminusLHS<0);}
+  else if (pE->compare==COMPARE_LESSTHAN)               {return (RHSminusLHS>=0);}
+  else if (pE->compare==COMPARE_GREATERTHAN)            {return (RHSminusLHS<=0);}
   return false;
 }
 

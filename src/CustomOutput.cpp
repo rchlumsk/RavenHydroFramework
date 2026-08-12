@@ -357,6 +357,11 @@ void CCustomOutput::DetermineCustomFilename(const optStruct& Options)
     else                     {_filename=Options.output_dir+_filename; }
   }
 
+  //replace | with _ in constituent names 
+  size_t  k=_filename.find_first_of("|");
+  if (k != std::string::npos) {_filename[k] = '_';}
+
+
   //QA/QC
   if ((GetFileExtension(_filename)=="nc") && (Options.output_format!=OUTPUT_NETCDF)){
     WriteWarning("User-specified custom output supplied with .nc extension, but specified output format is not NetCDF",Options.noisy);
