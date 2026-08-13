@@ -983,12 +983,6 @@ double CModel::CalculateSubDailyCorrection(const force_struct &F,
   //-----------------------------------------------------
   else if (Options.subdaily==SUBDAILY_UBC)
   {
-    if ( ForcingGridIsAvailable(F_PRECIP)         ||
-         ForcingGridIsAvailable(F_TEMP_AVE)       ||
-         ForcingGridIsAvailable(F_TEMP_DAILY_MIN) ||
-         ForcingGridIsAvailable(F_TEMP_DAILY_MAX)  ) {
-      ExitGracefully( "CModel::CalculateSubDailyCorrection: Option SUBDAILY_UBC is not implemented when gridded inputs are given.", BAD_DATA);
-    }
     //this is not pretty (and somewhat expensive), due to the need to correct all daily temperatures for every timestep, but it works
     double time_shift=Options.julian_start_day-floor(Options.julian_start_day)+TIME_CORRECTION;
     int nn_start=(int)(floor(tt.model_time+time_shift    )/Options.timestep);//index of first timestp in day
@@ -1006,13 +1000,30 @@ double CModel::CalculateSubDailyCorrection(const force_struct &F,
 
       start_of_day=floor(tt_tmp.model_time+time_shift);
       ZeroOutForcings(Ftmp);
-      for (int g=0;g<_nGauges;g++)
-      {
-        Ftmp.precip_daily_ave+=_aGaugeWtPrecip[k][g]*_pGauges[g]->GetForcingValue(F_PRECIP,start_of_day,1);
 
-        Ftmp.temp_ave        +=_aGaugeWtTemp[k][g]*_pGauges[g]->GetForcingValue(F_TEMP_AVE,nnn);
-        Ftmp.temp_daily_max  +=_aGaugeWtTemp[k][g]*_pGauges[g]->GetForcingValue(F_TEMP_DAILY_MAX,nnn);
-        Ftmp.temp_daily_min  +=_aGaugeWtTemp[k][g]*_pGauges[g]->GetForcingValue(F_TEMP_DAILY_MIN,nnn);
+      if (ForcingGridIsAvailable(F_PRECIP)) {
+        Ftmp.precip_daily_ave = GetForcingGrid(F_PRECIP)->GetDailyWeightedValue(k,tt.model_time,Options.timestep,Options);    
+      }
+      else{
+        for(int g=0;g<_nGauges;g++)
+        {
+          Ftmp.precip_daily_ave+=_aGaugeWtPrecip[k][g]*_pGauges[g]->GetForcingValue(F_PRECIP,start_of_day,1);
+        }
+      }
+
+      if (ForcingGridIsAvailable(F_TEMP_AVE))
+      {
+        Ftmp.temp_ave         = GetForcingGrid(F_TEMP_AVE)      ->GetWeightedValue(k,tt.model_time,Options.timestep);
+        Ftmp.temp_daily_min   = GetForcingGrid(F_TEMP_DAILY_MIN)->GetWeightedValue(k,tt.model_time,Options.timestep);
+        Ftmp.temp_daily_max   = GetForcingGrid(F_TEMP_DAILY_MAX)->GetWeightedValue(k,tt.model_time,Options.timestep);
+      }
+      else{
+        for(int g=0;g<_nGauges;g++)
+        {
+          Ftmp.temp_ave        +=_aGaugeWtTemp[k][g]*_pGauges[g]->GetForcingValue(F_TEMP_AVE,nnn);
+          Ftmp.temp_daily_max  +=_aGaugeWtTemp[k][g]*_pGauges[g]->GetForcingValue(F_TEMP_DAILY_MAX,nnn);
+          Ftmp.temp_daily_min  +=_aGaugeWtTemp[k][g]*_pGauges[g]->GetForcingValue(F_TEMP_DAILY_MIN,nnn);
+        }
       }
       CorrectTemp(Options,Ftmp,elev,ref_elev_temp,tt_tmp);
       sum+=max(Ftmp.temp_ave,0.0);
