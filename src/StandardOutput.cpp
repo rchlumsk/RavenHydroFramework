@@ -1884,8 +1884,8 @@ double CModel::CalculateAggDiagnostic(const int ii, const int j, const double &s
 void CModel::CalcUncertainty(const optStruct &Options)
 {
   if (_nObservedTS==0) { return; }
-  
-  if      (Options.uncert_method==UNCERTAINTY_NONE) 
+
+  if      (Options.uncert_method==UNCERTAINTY_NONE)
   {
     return;
   }

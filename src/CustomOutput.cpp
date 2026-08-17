@@ -357,7 +357,7 @@ void CCustomOutput::DetermineCustomFilename(const optStruct& Options)
     else                     {_filename=Options.output_dir+_filename; }
   }
 
-  //replace | with _ in constituent names 
+  //replace | with _ in constituent names
   size_t  k=_filename.find_first_of("|");
   if (k != std::string::npos) {_filename[k] = '_';}
 
@@ -377,12 +377,12 @@ void CCustomOutput::DetermineCustomFilename(const optStruct& Options)
 void CCustomOutput::WriteFileHeader(const optStruct &Options)
 {
   DetermineCustomFilename(Options);
-  
+
   _CUSTOM.open(_filename.c_str());
   if (_CUSTOM.fail()){
     WriteWarning("CCustomOutput::WriteFileHeader: Unable to create file "+_filename,true);
   }
-  
+
   // clear data (for ensembles)
   for(int k=0;k<_nData;k++){
     for(int a=0;a<_nDataItems;a++) { _aData[k][a]=0.0; }

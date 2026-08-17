@@ -23,7 +23,7 @@ namespace lp_lib  {
 #endif
 }
 //For Visual Studio needs only - tells to link to library, CMake handles via makefile
-#pragma comment(lib,"../lib/lp_solve/lpsolve55.lib" ) 
+#pragma comment(lib,"../lib/lp_solve/lpsolve55.lib" )
 #endif
 
 const double PENALTY_MAXIMUM=1000001; //1e6+1
