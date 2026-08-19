@@ -355,7 +355,7 @@ void   CConstituentModel::RouteMassInReservoir(const int          p,          //
   tmp/=(1.0+0.5*Options.timestep*(Q_new/V_new+decay_coeff+AET_new/V_new));
   Res_mass=tmp;
 
-  // handle fixed Dirichlet conditions 
+  // handle fixed Dirichlet conditions
   double Cs;
   SourceTransfer=0.0;
   if (IsReservoirDirichlet(p, tt, Cs)) {

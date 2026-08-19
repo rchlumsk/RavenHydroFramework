@@ -24,11 +24,11 @@ enum meantype{ //mean type used in AR regression
 class CResidualErrorModel
 {
 private:/*------------------------------------------------------*/
-  
-  meantype        _meanType; 
+
+  meantype        _meanType;
 
   CTimeSeriesABC *_pQ95;
-  CTimeSeriesABC *_pQ05; 
+  CTimeSeriesABC *_pQ05;
   CTimeSeriesABC *_pError;
 
 public:/*-------------------------------------------------------*/

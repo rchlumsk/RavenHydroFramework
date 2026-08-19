@@ -455,7 +455,7 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
   else if ((type==INF_GREEN_AMPT) || (type==INF_GA_SIMPLE))
   {
     GetGreenAmptRunoff(state_vars,pHRU,Options,tt,rates,rainthru);
-    //impermeable surface correction included 
+    //impermeable surface correction included
   }
   //-----------------------------------------------------------------
   else if (type==INF_UPSCALED_GREEN_AMPT)

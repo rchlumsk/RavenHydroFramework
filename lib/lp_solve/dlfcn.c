@@ -726,17 +726,17 @@ static INT64 sign_extend(UINT64 value, UINT bits)
  *
  * On ARM64, an import thunk is also a relative jump pointing into the
  * import address table, implemented by the following three instructions:
- * 
+ *
  *      adrp x16, [page_offset]
- * Calculates the page address (aligned to 4KB) the IAT is at, based 
- * on the value of x16, with page_offset. 
+ * Calculates the page address (aligned to 4KB) the IAT is at, based
+ * on the value of x16, with page_offset.
  *
  *      ldr  x16, [x16, offset]
  * Calculates the final IAT address, x16 <- x16 + offset.
- * 
+ *
  *      br   x16
  * Jump to the address in x16.
- * 
+ *
  * The register used here is hardcoded to be x16.
  */
 static BOOL is_import_thunk( const void *addr )

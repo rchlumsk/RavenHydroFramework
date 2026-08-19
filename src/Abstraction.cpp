@@ -407,10 +407,10 @@ void   CmvAbstraction::GetRatesOfChange( const double        *state_vars,
     double Al;              //[km2] - surface area of large gatekeeper depression (<Al_max)
 
     double ponded  =state_vars[iPond];//[mm]
-    double Vsmall  =state_vars[iDepS];//[mm] 
+    double Vsmall  =state_vars[iDepS];//[mm]
     double Vlarge  =state_vars[iDepL];//[mm]
     double fsc_last=state_vars[iCFac];//[0..1] contributing fraction from previous time step
-    double old_corr=state_vars[iCorr];//[0..1] infiltration multiplier 
+    double old_corr=state_vars[iCorr];//[0..1] infiltration multiplier
 
     double PET     =pHRU->GetForcingFunctions()->OW_PET*tstep; //[mm]
 
@@ -424,14 +424,14 @@ void   CmvAbstraction::GetRatesOfChange( const double        *state_vars,
     double runoff=ponded;
     //runoff=pHRU->GetForcingFunctions()->wind_vel*tstep; //debugging
 
-    double dVs = runoff * (Asu - As) / Atot + ponded * (As/Atot); 
+    double dVs = runoff * (Asu - As) / Atot + ponded * (As/Atot);
     double AET=(As/Atot)*PET;
 
     dVs-=AET;
 
     //update contributing fraction-----------------------------------
     double fsc=HGDMcontrib_fraction(Vsmall,dVs,Vs_max,fsc_last); //fsc is only used in next timestep (updated here using intial Vsmall)
-    
+
     //Small depressions----------------------------------------------
     if (dVs>0)
     {
@@ -455,11 +455,11 @@ void   CmvAbstraction::GetRatesOfChange( const double        *state_vars,
     else if (Vlarge >= Vl_max){Al=Al_max;}
     else                      {Al=Al_max*pow(Vlarge/Vl_max,2/(p_large+2));}
 
-    double dVl=runoff* (Alu-Al)/Atot + ponded*Al/Atot + to_large; 
+    double dVl=runoff* (Alu-Al)/Atot + ponded*Al/Atot + to_large;
     //double AET_l=0.65*(Al/Atot)*PET;
     double AET_l=(Al/Atot)*PET;
 
-    dVl-=AET_l; 
+    dVl-=AET_l;
 
     if (dVl>0){
       Vlarge+=dVl;

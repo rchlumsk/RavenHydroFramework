@@ -15,13 +15,13 @@ double getPercentileVal(double *arr,const int N,double percentile)
 }
 double BoxCoxTransform(const double &Q,const double &A,const double &lambda)
 {
-  if (lambda==0){return log(Q+A);} 
+  if (lambda==0){return log(Q+A);}
   else          {return (pow(Q+A,lambda)-1.0)/lambda;}
 }
 double InvBoxCoxTransform(const double eta,const double &Q,const double &A,const double &lambda)
 //inverts eta = box(Q)-box(Qsim), not box(Qsim)
 {
-  if (lambda==0){return exp(eta)*(Q+A)-A;} 
+  if (lambda==0){return exp(eta)*(Q+A)-A;}
   else          {return pow(lambda*eta+pow(Q+A,lambda),1.0/lambda)-A;}
 }
 //////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ CResidualErrorModel::CResidualErrorModel()
 {
   _meanType=MEAN_CONSTANT;
   _pQ95=NULL;
-  _pQ05=NULL; 
+  _pQ05=NULL;
   _pError=NULL;
 }
 //////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ CResidualErrorModel::CResidualErrorModel()
 CResidualErrorModel::~CResidualErrorModel()
 {
   delete _pQ95;
-  delete _pQ05; 
+  delete _pQ05;
   delete _pError;
 }
 
@@ -126,15 +126,15 @@ void lm(const double *eta,const double *Qtrans,const int N, double &mu0,double &
 }
 //////////////////////////////////////////////////////////////////
 /// \brief Uses method of moments to estimate AR1 coefficients mu0 and mu1, plus autocorrelation coeff rho, sigma_eta, and sigma_y
-/// only uses gap-free data 
+/// only uses gap-free data
 //
 void AR1_MoM(const double *eta,const double *Qtrans, const int N, const meantype mtype,         //inputs
              double &mu0, double &mu1,double &rho,double &sigma, double *mu, double *etastar)   //outputs
 {
   double s,sb,sf;
   mu0=mu1=0;
-  if      (mtype==MEAN_LINEAR  ) {lm(eta,Qtrans,N,mu0,mu1);} 
-  else if (mtype==MEAN_CONSTANT) {for (int n=0;n<N;n++){mu0+=eta[n]/(double)(N);}} 
+  if      (mtype==MEAN_LINEAR  ) {lm(eta,Qtrans,N,mu0,mu1);}
+  else if (mtype==MEAN_CONSTANT) {for (int n=0;n<N;n++){mu0+=eta[n]/(double)(N);}}
   else if (mtype==MEAN_ZERO    ) {}//do nothing
 
 
@@ -144,7 +144,7 @@ void AR1_MoM(const double *eta,const double *Qtrans, const int N, const meantype
     etastar[n]=eta[n]-mu[n];
     sum+=etastar[n]*etastar[n];
   }
-  
+
   rho=sb=sf=0.0;
   for(int n=0;n<N-1;n++) {
     sb+=etastar[n+1];
@@ -156,7 +156,7 @@ void AR1_MoM(const double *eta,const double *Qtrans, const int N, const meantype
   sigma =sqrt(s*s*1-rho*rho);  //sigmaY
 }
 //////////////////////////////////////////////////////////////////
-/// \brief generates time series of output eta using AR1 autocorrelation 
+/// \brief generates time series of output eta using AR1 autocorrelation
 //
 void generate_AR1(const double *mu,const int N,const double &sigma,const double &rho,double *eta)
 {
@@ -167,7 +167,7 @@ void generate_AR1(const double *mu,const int N,const double &sigma,const double 
     if ((mu[n-1]==RAV_BLANK_DATA) || (mu[n]==RAV_BLANK_DATA) ) {
       eta[n] = RAV_BLANK_DATA;
       flag = true;
-    } 
+    }
    else {
       if (flag) { //last datapoint missing
         eta[n] = mu[n] + sd*GaussRandom();
@@ -180,7 +180,7 @@ void generate_AR1(const double *mu,const int N,const double &sigma,const double 
   }
 }
 //////////////////////////////////////////////////////////////////
-/// \brief calculates residual error model and generates uncertainty quantiles for simulated output 
+/// \brief calculates residual error model and generates uncertainty quantiles for simulated output
 //
 void  CResidualErrorModel::CalculateREM(CTimeSeriesABC  *pTSmod,
                                         CTimeSeriesABC  *pTSObs,
@@ -194,14 +194,14 @@ void  CResidualErrorModel::CalculateREM(CTimeSeriesABC  *pTSmod,
   double obsval,modval;
   double lambda=0.2;
   double A=0;
-  
+
   if(!strcmp(pTSObs->GetName().c_str(),"HYDROGRAPH") && (Options.ave_hydrograph == true)) { skip = 1; }
   double dt = Options.timestep;
 
   int nnstart=pTSObs->GetTimeIndexFromModelTime(starttime)+skip; //works for avg. hydrographs
   int nnend  =pTSObs->GetTimeIndexFromModelTime(endtime  )+1;    //+1 is just because below loops expressed w.r.t N, not N-1
 
-  // Count non-blank observations 
+  // Count non-blank observations
   //-------------------------------------------------------
   int Nobs(0);
   for(nn=nnstart;nn<nnend;nn++)
@@ -229,19 +229,19 @@ void  CResidualErrorModel::CalculateREM(CTimeSeriesABC  *pTSmod,
       aQmod  [n]=modval;
       //aErrors[n]=obsval-modval; n++;//why not modval-obsval? (not used here)
       aEta   [n]=BoxCoxTransform(obsval,A,lambda)-BoxCoxTransform(modval,A,lambda);
-      aQtrans[n]=BoxCoxTransform(modval,A,lambda); 
+      aQtrans[n]=BoxCoxTransform(modval,A,lambda);
       n++;
     }
   }
 
-  // Calculate AR1 autocorrelation (rho), mu, and eta* 
+  // Calculate AR1 autocorrelation (rho), mu, and eta*
   //-------------------------------------------------------
   AR1_MoM(aEta,aQtrans,Nobs,_meanType,  mu0,mu1,rho,sigma,mu,etastar);
-  
+
   //  re-introduce gaps in observed time series
   //-------------------------------------------------------
-  int Ntotal=nnend-nnstart; //This has to be the full simulation time 
-  double *mu_gapped=new double[Ntotal]; 
+  int Ntotal=nnend-nnstart; //This has to be the full simulation time
+  double *mu_gapped=new double[Ntotal];
   n=0;
   for(int nnn=0;nnn<Ntotal;nnn++)
   {
@@ -250,8 +250,8 @@ void  CResidualErrorModel::CalculateREM(CTimeSeriesABC  *pTSmod,
     if (obsval!=RAV_BLANK_DATA){mu_gapped[nnn]=mu[n]; n++;}
   }
 
-  // Generate a set of ensemble predictions from error model   
-  // corresponds to calc_pred_reps() routine 
+  // Generate a set of ensemble predictions from error model
+  // corresponds to calc_pred_reps() routine
   //-------------------------------------------------------
   int nEnsembleMems=100;
   double **predictions = new double *[nEnsembleMems];
@@ -304,7 +304,7 @@ void  CResidualErrorModel::CalculateREM(CTimeSeriesABC  *pTSmod,
   delete [] aQ95;
 }
 //////////////////////////////////////////////////////////////////
-/// \brief calculates residual error model and generates uncertainty quantiles for simulated output 
+/// \brief calculates residual error model and generates uncertainty quantiles for simulated output
 //
 void  CResidualErrorModel:: WriteOutput (const optStruct &Options) const
 {
