@@ -3580,7 +3580,7 @@ bool ParseMainInputFile (CModel     *&pModel,
       if (is_temp) {c=pModel->GetTransportModel()->GetConstituentIndex("TEMPERATURE");}
       else         {c=pModel->GetTransportModel()->GetConstituentIndex(s[1]);         }
 
-      if(c!=DOESNT_EXIST) 
+      if(c!=DOESNT_EXIST)
       {
         int kk = DOESNT_EXIST;
         if (Len > 3+add){ //read SB Group, if present

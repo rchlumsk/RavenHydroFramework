@@ -204,7 +204,7 @@ bool  CConstituentModel::IsReservoirDirichlet(const int p,const time_struct &tt,
   if(i_source==DOESNT_EXIST)          { return false; }
   if(!_pSources[i_source]->dirichlet) { return false; }
 
-  Cs =_pSources[i_source]->concentration;  
+  Cs =_pSources[i_source]->concentration;
   if(Cs == DOESNT_EXIST) {Cs = _pSources[i_source]->pTS->GetValue(tt.model_time);}//time series
 
   return true;
@@ -263,7 +263,7 @@ void   CConstituentModel::AddDirichletCompartment(const int i_stor,const int kk,
 
   pLast=pSource;//so source is not deleted upon leaving this routine
 }
-void CConstituentModel::AddDirichletReservoirs(const int kk, const double &Cs) 
+void CConstituentModel::AddDirichletReservoirs(const int kk, const double &Cs)
 {
   static constit_source *pLast;
   constit_source *pSource=new constit_source();
@@ -556,7 +556,7 @@ void CConstituentModel::Initialize(const optStruct &Options)
           if(_pModel->GetSubBasinGroup(_pSources[i]->kk)->IsInGroup(p)) {
             _aResSources[p]=i;
           }
-        } 
+        }
         else{
           _aResSources[p]=i;
         }

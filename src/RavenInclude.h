@@ -856,7 +856,7 @@ enum assimtype
 {
   DA_ECCC           ///< additive assimilation upstream propagation
 };
-enum uncerttype  
+enum uncerttype
 {
   UNCERTAINTY_NONE,
   UNCERTAINTY_REM

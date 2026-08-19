@@ -17,7 +17,7 @@
 /// \brief Method of calculating freezing of the ground surface
 //
 enum groundfreeze_type{
-  FREEZE_STEFAN,  ///< stefan model 
+  FREEZE_STEFAN,  ///< stefan model
   FREEZE_THERMAL, ///< based upon enthaly balance model
   FREEZE_RANKINEN ///< from Rankinen et al., HESS, 2004
 };

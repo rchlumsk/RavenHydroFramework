@@ -429,7 +429,7 @@ void CLandUseClass::InitializeSurfaceProperties(string name, surface_struct &S, 
   S.HGDM_large_areafrac=DefaultParameterValue(is_template,false);           //[0..1]
   S.HGDM_small_areafrac=DefaultParameterValue(is_template,false);           //[0..1]
   S.HGDM_p            =DefaultParameterValue(is_template,false);//1.2
-  S.HGDM_p_large      =DefaultParameterValue(is_template,false);//2     
+  S.HGDM_p_large      =DefaultParameterValue(is_template,false);//2
 
   S.dep_threshold     =DefaultParameterValue(is_template,false);//1.5;      //[mm]
   S.lake_rel_coeff    =DefaultParameterValue(is_template,false);//0.3;      //[1/d]
@@ -454,7 +454,7 @@ void CLandUseClass::InitializeSurfaceProperties(string name, surface_struct &S, 
   S.HMETS_runoff_coeff=DefaultParameterValue(is_template,false);//0.4
   S.bsnow_distrib     =DefaultParameterValue(is_template,false);//0.4
   S.lakesnow_buffer_ht=DefaultParameterValue(is_template,false);//50 mm
-  S.snow_dampen_coeff =DefaultParameterValue(is_template,false);//3 m 
+  S.snow_dampen_coeff =DefaultParameterValue(is_template,false);//3 m
   S.convection_coeff  =DefaultParameterValue(is_template,false);//~2
   S.pet_lin_coeff     =DefaultParameterValue(is_template,false);//~0.1-0.3
   S.pet_vap_coeff     =DefaultParameterValue(is_template,false);//~1-3
