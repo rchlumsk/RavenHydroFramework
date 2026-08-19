@@ -617,9 +617,10 @@ void CRavenBMI::GetValue(std::string name, void* dest)
   for (int i = 0; i < _output_vars.size(); i++) {
     if (_output_vars[i].name == name)
     {
+      int grid_size = GetGridSize(GetVarGrid(name));
       if(_output_vars[i].type== VAR_STREAMFLOW) {
-        out=new double [pModel->GetNumSubBasins()];
-        for (p = 0; p < pModel->GetNumSubBasins(); p++)
+        out=new double [grid_size];
+        for (p = 0; p < grid_size; p++)
         {
           if (Options.ave_hydrograph){
             out[p]=pModel->GetSubBasin(p)->GetIntegratedOutflow(Options.timestep)/(Options.timestep*SEC_PER_DAY);
@@ -631,8 +632,8 @@ void CRavenBMI::GetValue(std::string name, void* dest)
       }
       else if(_output_vars[i].type== VAR_RESERVOIR_STAGE)
       {
-        out=new double [pModel->GetNumSubBasins()];
-        for (p = 0; p < pModel->GetNumSubBasins(); p++) {
+        out=new double [grid_size];
+        for (p = 0; p < grid_size; p++) {
           CSubBasin* pBasin = pModel->GetSubBasin(p);
           out[p] = 0.0;
           if (pBasin->GetReservoir() != NULL) {
@@ -642,22 +643,22 @@ void CRavenBMI::GetValue(std::string name, void* dest)
       }
       else if (_output_vars[i].type==VAR_STATE_VAR){
         iSV = pModel->GetStateVarIndex(_output_vars[i].state_var_type, _output_vars[i].sv_layer_ind);
-        out=new double[pModel->GetNumHRUs()];
-        for (k = 0; k < pModel->GetNumHRUs(); k++) {
+        out=new double[grid_size];
+        for (k = 0; k < grid_size; k++) {
           out[k]=pModel->GetHydroUnit(k)->GetStateVarArray()[iSV];
         }
       }
       else if (_output_vars[i].type==VAR_FORCING_FUNCTION)
       {
-        out=new double[pModel->GetNumHRUs()];
-        for (k = 0; k < pModel->GetNumHRUs(); k++) {
+        out=new double[grid_size];
+        for (k = 0; k < grid_size; k++) {
           out[k]=pModel->GetHydroUnit(k)->GetForcing(_output_vars[i].f_type);
         }
       }
     }
   }
   if (out!=NULL){
-    memcpy(dest,out,pModel->GetNumHRUs()*sizeof(double));
+    memcpy(dest,out,GetVarNbytes(name));
     delete [] out;
   }
   else{
