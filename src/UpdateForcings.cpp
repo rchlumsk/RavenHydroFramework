@@ -1002,7 +1002,7 @@ double CModel::CalculateSubDailyCorrection(const force_struct &F,
       ZeroOutForcings(Ftmp);
 
       if (ForcingGridIsAvailable(F_PRECIP)) {
-        Ftmp.precip_daily_ave = GetForcingGrid(F_PRECIP)->GetDailyWeightedValue(k,tt.model_time,Options.timestep,Options);    
+        Ftmp.precip_daily_ave = GetForcingGrid(F_PRECIP)->GetDailyWeightedValue(k,tt.model_time,Options.timestep,Options);
       }
       else{
         for(int g=0;g<_nGauges;g++)

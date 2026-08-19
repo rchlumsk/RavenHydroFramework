@@ -423,7 +423,7 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   {
     layer_index = _pTransportModel->GetLayerIndexFromName2(tmp, layer_index);
     if (layer_index==DOESNT_EXIST){typ=UNRECOGNIZED_SVTYPE;}
-  } 
+  }
 
   if ((strict) && (typ==UNRECOGNIZED_SVTYPE)){
     cout<<tmp<<endl;
@@ -516,7 +516,7 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
     //Transport variables
     case(CONSTITUENT):    {
       name = "!" + this->_pTransportModel->GetConstituentTypeName(layerindex); //e.g., !Nitrogen[3]
-      //overridden below 
+      //overridden below
       break;
     }
     case(CONSTITUENT_SRC):    {
@@ -558,7 +558,7 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
     name=name+"["+to_string(layerindex)+"]";
   }
   //sometimes multilayer variables
-  else if ((layerindex>0) && ((typ==SNOW) || (typ==SNOW_LIQ) || (typ==COLD_CONTENT) || 
+  else if ((layerindex>0) && ((typ==SNOW) || (typ==SNOW_LIQ) || (typ==COLD_CONTENT) ||
            (typ==GROUNDWATER) || (typ==DEPRESSION)) )
   {
     name=name+"["+to_string(layerindex)+"]";
@@ -591,13 +591,8 @@ string CStateVariable::SVStringBreak(const string s, int &num)
   pch  = strpbrk (ss, key1); //pch is now pointer to '[' character
   pch2 = strpbrk (ss, key2); //pch is now pointer to ']' character
   if ((pch==NULL) || (pch2==NULL)){num=0;return s;}//one or both brackets missing - layer = 0
-#if defined (__APPLE__) || defined (__CYGWIN__)
-  strxfrm(tmp,ss,pch-ss+1);
-  strxfrm(tmp2,pch+1,pch2-pch);
-#else
-  strxfrm(tmp,ss,pch-ss);          //Extract type (e.g., "SOIL" from "SOIL[13]")
-  strxfrm(tmp2,pch+1,pch2-pch-1);  //Extract index (e.g., "13" from "SOIL[13]")
-#endif
+  strncpy(tmp, ss, pch-ss);          //Extract type (e.g., "SOIL" from "SOIL[13]")
+  strncpy(tmp2, pch+1, pch2-pch-1);  //Extract index (e.g., "13" from "SOIL[13]")
   //cout<<tmp2<<endl;
   for(int i = 0; i < (int)(strlen(tmp2)); ++i) {
     if(!isdigit(tmp2[i])) {
