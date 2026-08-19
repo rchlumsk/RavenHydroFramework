@@ -309,7 +309,6 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
 {
 
   if ((pHRU->GetHRUType()!=HRU_STANDARD) &&
-      (pHRU->GetHRUType()!=HRU_ROCK) &&
       (pHRU->GetHRUType()!=HRU_MASKED_GLACIER)){return;}//disabled on Lakes & glaciers
 
   double runoff;
@@ -331,6 +330,7 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
   if (type==INF_RATIONAL)
   {
     runoff=pHRU->GetSurfaceProps()->partition_coeff*rainthru;
+    runoff=(Fimp)*rainthru+(1-Fimp)*runoff; //correct for impermeable surfaces
     rates[0]=rainthru-runoff;
     rates[1]=runoff;
   }
@@ -338,6 +338,7 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
   else if ((type==INF_SCS) || (type==INF_SCS_NOABSTRACTION))
   {
     runoff=GetSCSRunoff(pHRU,Options,tt,rainthru);
+    runoff=(Fimp)*rainthru+(1-Fimp)*runoff; //correct for impermeable surfaces
     rates[0]=rainthru-runoff;
     rates[1]=runoff;
   }
@@ -454,6 +455,7 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
   else if ((type==INF_GREEN_AMPT) || (type==INF_GA_SIMPLE))
   {
     GetGreenAmptRunoff(state_vars,pHRU,Options,tt,rates,rainthru);
+    //impermeable surface correction included 
   }
   //-----------------------------------------------------------------
   else if (type==INF_UPSCALED_GREEN_AMPT)
@@ -577,12 +579,12 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
     runoff1=max(a1*ponded_water-def1,0.0);
     runoff2=max(a2*ponded_water-def2,0.0);
     runoff3=max(a3*ponded_water-def3,0.0);
-    infil1=a1*ponded_water-runoff1;
-    infil2=a2*ponded_water-runoff2;
-    infil3=a3*ponded_water-runoff3;
+    infil1=(a1*ponded_water-runoff1)*(1-Fimp);
+    infil2=(a2*ponded_water-runoff2)*(1-Fimp);
+    infil3=(a3*ponded_water-runoff3)*(1-Fimp);
 
-    excess=(1.0-BFI)*(runoff1+runoff2+runoff3);
-    to_GW =(    BFI)*(runoff1+runoff2+runoff3);
+    excess=(1.0-BFI)*(runoff1+runoff2+runoff3)*(1-Fimp)+ponded_water*Fimp;
+    to_GW =(    BFI)*(runoff1+runoff2+runoff3)*(1-Fimp);
 
     rates[0]=   infil1/Options.timestep;   //PONDED->SOIL[0]
     rates[1]=   infil2/Options.timestep;   //PONDED->SOIL[1]

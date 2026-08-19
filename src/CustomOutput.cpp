@@ -357,6 +357,11 @@ void CCustomOutput::DetermineCustomFilename(const optStruct& Options)
     else                     {_filename=Options.output_dir+_filename; }
   }
 
+  //replace | with _ in constituent names 
+  size_t  k=_filename.find_first_of("|");
+  if (k != std::string::npos) {_filename[k] = '_';}
+
+
   //QA/QC
   if ((GetFileExtension(_filename)=="nc") && (Options.output_format!=OUTPUT_NETCDF)){
     WriteWarning("User-specified custom output supplied with .nc extension, but specified output format is not NetCDF",Options.noisy);
@@ -372,11 +377,12 @@ void CCustomOutput::DetermineCustomFilename(const optStruct& Options)
 void CCustomOutput::WriteFileHeader(const optStruct &Options)
 {
   DetermineCustomFilename(Options);
-
+  
   _CUSTOM.open(_filename.c_str());
   if (_CUSTOM.fail()){
     WriteWarning("CCustomOutput::WriteFileHeader: Unable to create file "+_filename,true);
   }
+  
   // clear data (for ensembles)
   for(int k=0;k<_nData;k++){
     for(int a=0;a<_nDataItems;a++) { _aData[k][a]=0.0; }
@@ -385,8 +391,6 @@ void CCustomOutput::WriteFileHeader(const optStruct &Options)
   // write the appropriately formatted header
   switch(Options.output_format)
   {
-  case OUTPUT_NONE:
-    /* do nothing */                return;
   case OUTPUT_STANDARD:
   default:
     WriteCSVFileHeader();           return;
@@ -818,8 +822,6 @@ void GetQuartiles(const double *values, const int size, double &Q1, double &Q2, 
 void CCustomOutput::WriteCustomOutput(const time_struct &tt,
                                       const optStruct   &Options)
 {
-  if(Options.output_format==OUTPUT_NONE){return; }
-
   //each custom output gets values of vals data[nHRUs] (max size)
   double val=0;
   double dday;//,jul_day;

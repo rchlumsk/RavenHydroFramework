@@ -119,7 +119,7 @@ void   CAgeTracer::SetInitialTimeOffset(const double &tdiff){
 //
 double CAgeTracer::CalculateReportingConcentration(const double &mass,const double &vol) const
 {
-  if(fabs(vol)<1e-6) {return 0.0;} //{return RAV_BLANK_DATA;}
+  if(fabs(vol)<1e-3) {return RAV_BLANK_DATA;}
   double C=CConstituentModel::CalculateReportingConcentration(mass,vol); //d
   return _model_time-C; //d
 }

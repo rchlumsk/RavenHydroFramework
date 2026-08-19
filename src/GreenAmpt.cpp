@@ -163,15 +163,15 @@ void CmvInfiltration::GetGreenAmptRunoff (const double            *state_vars,
   runoff = threshPositive(rainthru-finf); //THRESHOLD BEHAVIOUR
   runoff=(Fimp)*rainthru+(1-Fimp)*runoff; //correct for impermeable surfaces
 
+  rates[0]=rainthru-runoff;
+  rates[1]=runoff;
+
   if (type==INF_GA_SIMPLE)
   {
     cumInf += (rainthru-runoff)*Options.timestep;
-    rates[2]= (cumInf-state_vars[pModel->GetStateVarIndex(CUM_INFIL)])/Options.timestep;
+    rates[2]= (cumInf  -state_vars[pModel->GetStateVarIndex(CUM_INFIL)])/Options.timestep;
     rates[3]= (initStor-state_vars[pModel->GetStateVarIndex(GA_MOISTURE_INIT)])/Options.timestep;
   }
-
-  rates[0]=rainthru-runoff;
-  rates[1]=runoff;
 }
 
 ///////////////////////////////////////////////////////////////

@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------
   Raven Library Source Code
-  Copyright (c) 2008-2025 the Raven Development Team
+  Copyright (c) 2008-2026 the Raven Development Team
   ----------------------------------------------------------------
   DemandOptimization.h
   ----------------------------------------------------------------*/
@@ -22,6 +22,8 @@ namespace lp_lib  {
 #include "../lib/lp_solve_unix/lp_lib.h"
 #endif
 }
+//For Visual Studio needs only - tells to link to library, CMake handles via makefile
+#pragma comment(lib,"../lib/lp_solve/lpsolve55.lib" ) 
 #endif
 
 const double PENALTY_MAXIMUM=1000001; //1e6+1
