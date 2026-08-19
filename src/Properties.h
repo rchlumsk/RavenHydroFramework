@@ -254,7 +254,7 @@ struct surface_struct
   double rain_melt_mult;    ///< [-]       rain melt multiplier
   double bsnow_distrib;     ///< [-]       blowing snow distribution parameter
   double lakesnow_buffer_ht;///< [mmSWE]   height of snow above which potential melt energy doest reach lake ice
-  double snow_dampen_coeff; ///< [1/m]     thermal dampening coefficeint for Raniken et al soil temp model
+  double snow_dampen_coeff; ///< [1/m]     thermal dampening coefficient for Raniken et al soil temp model
 
   //Glacier parameters
   double glac_storage_coeff;   ///< [-]    maximum linear storage coefficient for glacial melt =K*G
@@ -313,6 +313,7 @@ struct surface_struct
   double priestleytaylor_coeff; ///< [-]   Priestley-Taylor coefficient (defaults to 1.28)
   double pet_lin_coeff;     ///< [mm/d/K]  linear PET relation with temperature ~(0.1-0.3)
   double pet_vap_coeff;     ///< [mm/d/kPa] linear PET relation with vapor deficit ~(1-3 mm/d/kPa, ~1.5 for mountain streams)
+  double sublim_corr;       ///< [-]       correction to sublimation rate
 
   double relhum_corr;       ///< [-]       local correction factor for relative humidity (defaults to 1)
   double wind_vel_corr;     ///< [-]       local correction factor for wind speed (defaults to 1)

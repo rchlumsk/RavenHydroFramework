@@ -273,7 +273,11 @@ void CLandUseClass::AutoCalculateLandUseProps(surface_struct &Stmp,
   if(autocalc) {
     S.divert_fract = 0.0;
   }
-
+  autocalc = SetCalculableValue(S.sublim_corr,Stmp.sublim_corr,Sdefault.sublim_corr);
+  if(autocalc) {
+    S.sublim_corr = 1.0;
+  }
+  
   /*for(i=0;i<N_LU_PARAMETERS;i++) {
   if (!S.params[i].iscomputable){
     SetSpecifiedValue(S.params[i].value,Stmp.params[i].value,Sdefault.params[i].value,params[i].name);//(needed_params.partition_coeff>0.0)
@@ -402,6 +406,7 @@ void CLandUseClass::InitializeSurfaceProperties(string name, surface_struct &S, 
   S.relhum_corr      =DefaultParameterValue(is_template,true);//1.0
   S.wind_vel_corr    =DefaultParameterValue(is_template,true);//1.0
   S.divert_fract     =DefaultParameterValue(is_template,true);//0.0
+  S.sublim_corr      =DefaultParameterValue(is_template,true);//1.0
 
   //User-specified parameters
   S.partition_coeff   =DefaultParameterValue(is_template,false);//0.4;//needs reasonable defaults
@@ -556,6 +561,7 @@ void  CLandUseClass::SetSurfaceProperty(surface_struct &S,
   else if (!name.compare("RELHUM_CORR"            )){S.relhum_corr=value;}
   else if (!name.compare("WINDVEL_CORR"           )){S.wind_vel_corr=value;}
   else if (!name.compare("WIND_VEL_CORR"          )){S.wind_vel_corr=value;}
+  else if (!name.compare("SUBLIM_CORR"            )){S.sublim_corr=value;}
   else if (!name.compare("GR4J_X4"                )){S.GR4J_x4=value;}
   else if (!name.compare("UBC_ICEPT_FACTOR"       )){S.UBC_icept_factor=value;}
   else if (!name.compare("WIND_EXPOSURE"          )){S.wind_exposure=value;}
@@ -673,6 +679,7 @@ double CLandUseClass::GetSurfaceProperty(const surface_struct &S, string param_n
   else if (!name.compare("RELHUM_CORR"            )){return S.relhum_corr;}
   else if (!name.compare("WINDVEL_CORR"           )){return S.wind_vel_corr;}
   else if (!name.compare("WIND_VEL_CORR"          )){return S.wind_vel_corr;}
+  else if (!name.compare("SUBLIM_CORR"            )){return S.sublim_corr;}
   else if (!name.compare("GR4J_X4"                )){return S.GR4J_x4;}
   else if (!name.compare("UBC_ICEPT_FACTOR"       )){return S.UBC_icept_factor;}
   else if (!name.compare("WIND_EXPOSURE"          )){return S.wind_exposure;}
