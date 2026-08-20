@@ -1102,6 +1102,8 @@ bool ParseHRUPropsFile(CModel *&pModel, const optStruct &Options, bool terrain_r
       :GaugedSubBasinGroup {SubBasinGroup}
       e.g.,
       :GaugedSubBasinGroup KeyGauges
+
+      MUST BE AFTER :SubBasins block
       */
       if (Options.noisy) { cout << "   GaugedSubBasinGroup..." << endl; }
 

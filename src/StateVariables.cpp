@@ -357,6 +357,7 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   else if (!tmp.compare("GROUND_WATER"    )){typ=GROUNDWATER;}
   else if (!tmp.compare("GWMODEL"         )){typ=GROUNDWATER;}
   else if (!tmp.compare("AQUIFER"         )){typ=GROUNDWATER;}
+  else if (!tmp.compare("CUM_INFIL"       )){typ=CUM_INFIL;}
   else if (!tmp.compare("CANOPY"          )){typ=CANOPY;}
   else if (!tmp.compare("CANOPYSNOW"      )){typ=CANOPY_SNOW;}
   else if (!tmp.compare("CANOPY_SNOW"     )){typ=CANOPY_SNOW;}
