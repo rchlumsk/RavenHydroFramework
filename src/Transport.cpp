@@ -673,13 +673,13 @@ void CTransportModel::Prepare(const optStruct &Options)
   //Synopsis
   //----------------------------------------------------------------------------
   if(!Options.silent) {
-    cout<<"===TRANSPORT MODEL SUMMARY=============================="<<endl;
+    cout<<"===TRANSPORT MODEL SUMMARY==================================="<<endl;
     cout<<"   number of compartments: "<<_nWaterCompartments<<endl;
     cout<<"   number of constituents: "<<_nConstituents<<endl;
     cout<<"   number of connections:  "<<_nAdvConnections<<endl;
     cout<<"   number of lat. connect.:"<<_nLatConnections<<endl;
     //cout<<"   number of source terms: "<<_nSources<<endl;
-    cout<<"========================================================"<<endl;
+    cout<<"============================================================="<<endl;
     // TMP DEBUG below===================================================
     /*if (false){
     for (int i=0;i<_nAdvConnections;i++)

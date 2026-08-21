@@ -40,7 +40,6 @@ void FinalizeGracefully(const char *statement, exitcode code)
   cout << "Exiting Gracefully: " << statement                            << endl;
   cout << typeline                                                       << endl;
   cout << "============================================================" << endl;
-
 }
 
 

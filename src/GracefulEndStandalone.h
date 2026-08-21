@@ -31,7 +31,7 @@ inline void FinalizeGracefully(const char *statement, exitcode code)
 
   string typeline;
   switch (code){
-    case(SIMULATION_DONE): {typeline="============================================================";break;}
+    case(SIMULATION_DONE): {typeline="=============================================================";break;}
     case(RUNTIME_ERR):     {typeline="Error Type: Runtime Error";       break;}
     case(BAD_DATA):        {typeline="Error Type: Bad input data";      break;}
     case(BAD_DATA_WARN):   {typeline="Error Type: Bad input data";      break;}
@@ -59,11 +59,11 @@ inline void FinalizeGracefully(const char *statement, exitcode code)
   if (code==BAD_DATA_WARN){return;}//just write these errors to a file if not in strict mode
 
   cerr <<endl<<endl;
-  cerr <<"============== Exiting Gracefully =========================="<<endl;
-  cerr <<"Exiting Gracefully: "<<statement                             <<endl;
-  cerr << typeline                                                     <<endl;
-  cerr <<"============================================================"<<endl;
-
+  cerr <<"============== Exiting Gracefully ==========================="<<endl;
+  cerr <<"Exiting Gracefully: "<<statement                              <<endl;
+  cerr << typeline                                                      <<endl;
+  cerr <<"============================================================="<<endl;
+         
   delete pModel; pModel=NULL; //deletes EVERYTHING!
 
   if(Options->pause) {

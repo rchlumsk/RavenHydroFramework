@@ -211,9 +211,9 @@ bool ParseMainInputFile (CModel     *&pModel,
   tmpLev = new int    [MAX_STATE_VARS];
 
   if (Options.noisy){
-    cout <<"======================================================"<<endl;
-    cout << "Parsing Input File " << Options.rvi_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
+    cout << "Parsing Input File " << Options.rvi_filename <<"..."         <<endl;
+    cout <<"============================================================="<<endl;
   }
 
   INPUT.open(Options.rvi_filename.c_str());

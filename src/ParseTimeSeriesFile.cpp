@@ -55,9 +55,9 @@ bool ParseTimeSeriesFile(CModel *&pModel, const optStruct &Options)
 
   if (Options.noisy)
   {
-    cout <<"==========================================================="<<endl;
-    cout << "Parsing Forcing Data File " << Options.rvt_filename <<"..."<<endl;
-    cout <<"==========================================================="<<endl;
+    cout <<"============================================================="<<endl;
+    cout << "Parsing Forcing Data File " << Options.rvt_filename <<"..."  <<endl;
+    cout <<"============================================================="<<endl;
   }
 
   //--Sift through file-----------------------------------------------
