@@ -217,9 +217,9 @@ bool ParseClassPropertiesFile(CModel         *&pModel,
   }
 
   if (Options.noisy){
-    cout <<"======================================================"<<endl;
-    cout << "Parsing Properties File " << Options.rvp_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
+    cout << "Parsing Properties File " << Options.rvp_filename <<"..."    <<endl;
+    cout <<"============================================================="<<endl;
   }
 
   int   code;

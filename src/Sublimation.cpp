@@ -62,12 +62,12 @@ void CmvSublimation::Initialize(){}
 //
 void CmvSublimation::GetParticipatingParamList(string *aP, class_type *aPC, int &nP) const
 {
-  nP=1;
-  aP[0]="SNOW_TEMPERATURE"; aPC[0]=CLASS_GLOBAL;
+  nP=0;
+  aP[nP]="SNOW_TEMPERATURE";  aPC[nP]=CLASS_GLOBAL;nP++;
+  aP[nP]="SUBLIM_CORR";       aPC[nP]=CLASS_LANDUSE;nP++;
   if (type==SUBLIM_SVERDRUP)
   {
-    nP+=1;
-    aP[1]="SNOW_ROUGHNESS";   aPC[1]=CLASS_GLOBAL;
+    aP[nP]="SNOW_ROUGHNESS";  aPC[nP]=CLASS_GLOBAL;nP++;
   }
   else if (type==SUBLIM_PBSM)
   {
@@ -207,8 +207,9 @@ void CmvSublimation::GetRatesOfChange(const double      *state_vars,
 {
 
   double wind_vel=pHRU->GetForcingFunctions()->wind_vel;          // [m/s]
+  double sublim_corr=pHRU->GetSurfaceProps()->sublim_corr;
 
-  rates[0] = SublimationRate(state_vars, pHRU, pModel, tt, wind_vel, type); //Uses wind vel @ 2m
+  rates[0] = sublim_corr*SublimationRate(state_vars, pHRU, pModel, tt, wind_vel, type); //Uses wind vel @ 2m
 
   if(_nConnections==2) {// simulating snow depth
     int iSnowDepth=pModel->GetStateVarIndex(SNOW_DEPTH);

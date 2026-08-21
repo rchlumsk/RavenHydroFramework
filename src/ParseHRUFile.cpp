@@ -53,9 +53,9 @@ bool ParseHRUPropsFile(CModel *&pModel, const optStruct &Options, bool terrain_r
   CParser *pSecondaryParser=NULL; //for storage of secondary parser while reading tertiary files
 
   if (Options.noisy){
-    cout <<"======================================================"<<endl;
-    cout <<"Parsing RVH Input File "<< Options.rvh_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
+    cout <<"Parsing RVH Input File "<< Options.rvh_filename <<"..."       <<endl;
+    cout <<"============================================================="<<endl;
   }
 
   //--Sift through file-----------------------------------------------
@@ -1102,6 +1102,8 @@ bool ParseHRUPropsFile(CModel *&pModel, const optStruct &Options, bool terrain_r
       :GaugedSubBasinGroup {SubBasinGroup}
       e.g.,
       :GaugedSubBasinGroup KeyGauges
+
+      MUST BE AFTER :SubBasins block
       */
       if (Options.noisy) { cout << "   GaugedSubBasinGroup..." << endl; }
 

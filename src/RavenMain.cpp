@@ -67,13 +67,13 @@ int main(int argc, char* argv[])
 
   if (!Options.silent){
     int year = s_to_i(RavenBuildDate.substr(RavenBuildDate.length()-4,4).c_str());
-    cout <<"============================================================"<<endl;
-    cout <<"                        RAVEN                               "<<endl;
-    cout <<" a robust semi-distributed hydrological modelling framework "<<endl;
-    cout <<"    Copyright 2008-"<<year<<", the Raven Development Team   "<<endl;
-    cout <<"    Version:   "<<Options.version                            <<endl;
-    cout <<"    BuildDate: "<<RavenBuildDate                             <<endl;
-    cout <<"============================================================"<<endl;
+    cout <<"============================================================="<<endl;
+    cout <<"                        RAVEN                                "<<endl;
+    cout <<" a robust semi-distributed hydrological modelling framework  "<<endl;
+    cout <<"    Copyright 2008-"<<year<<", the Raven Development Team    "<<endl;
+    cout <<"    Version:   "<<Options.version                             <<endl;
+    cout <<"    BuildDate: "<<RavenBuildDate                              <<endl;
+    cout <<"============================================================="<<endl;
   }
 
   ofstream WARNINGS;
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
   CheckForErrorWarnings(true, pModel);
 
   if (!Options.silent){
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
     cout <<"Initializing Model..."<<endl;
   }
   pModel->Initialize                  (Options);
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
     pModel->WriteOutputFileHeaders(Options);
 
     if (!Options.silent) {
-      cout <<endl<<"======================================================"<<endl;
+      cout <<endl<<"============================================================="<<endl;
       if (nEnsembleMembers>1) { cout<<"Ensemble Member "<<e+1<<" "; g_suppress_warnings=true;}
       cout <<"Simulation Start..."<<endl;
     }
@@ -178,14 +178,14 @@ int main(int argc, char* argv[])
 
     if(!Options.silent)
     {
-      cout <<"======================================================"<<endl;
+      cout <<"============================================================="<<endl;
       cout <<"...Raven Simulation Complete: "<<Options.run_name<<endl;
       cout <<"    Parsing & initialization: "<< float(t1     -t0)/CLOCKS_PER_SEC << " seconds elapsed . "<<endl;
       cout <<"                  Simulation: "<< float(clock()-t1)/CLOCKS_PER_SEC << " seconds elapsed . "<<endl;
       if(Options.output_dir!="") {
         cout <<"  Output written to "        << Options.output_dir                                       <<endl;
       }
-      cout <<"======================================================"<<endl;
+      cout <<"============================================================="<<endl;
     }
     if (Options.benchmarking) {
       cout <<"                              "<< pModel->GetNumHRUs()*(Options.duration/Options.timestep)/(float(clock()-t1)/CLOCKS_PER_SEC)<<" HRU-time steps/second"<<endl;

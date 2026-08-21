@@ -2206,9 +2206,9 @@ void CDemandOptimizer::SolveManagementProblem(CModel *pModel, const optStruct &O
       else if (retval==ACCURACYERROR){code="ACCURACY ERROR"; }
       else if (retval==NUMFAILURE   ){code="NUMERICAL FAILURE"; }
 
-      cout<<"=========================================="<<endl;
-      cout<<"LP SOLVE CANNOT SOLVE OPTIMIZATION PROBLEM"<<endl;
-      cout<<"=========================================="<<endl;
+      cout<<"============================================================="<<endl;
+      cout<<"LP SOLVE CANNOT SOLVE OPTIMIZATION PROBLEM"                   <<endl;
+      cout<<"============================================================="<<endl;
       cout<<"Diagnostics:"<<endl;
       cout<<"  lp_lib::solve error code: "<<retval<<" ("<<code<<")"<<endl;
       cout<<"  lp accuracy: "<<lp_lib::get_accuracy(pLinProg)<<endl;

@@ -1646,7 +1646,7 @@ void CModel::SummarizeToScreen  (const optStruct &Options) const
 
   if(!Options.silent)
   {
-    cout <<"==MODEL SUMMARY======================================="<<endl;
+    cout <<"==MODEL SUMMARY=============================================="<<endl;
     cout <<"       Model Run: "<<Options.run_name    <<endl;
     cout <<"      Start time: "<<tt.date_string      <<endl;
     cout <<"        End time: "<<tt2.date_string     <<" (duration="<<Options.duration<<" days)"<<endl;
@@ -1675,7 +1675,7 @@ void CModel::SummarizeToScreen  (const optStruct &Options) const
     cout <<"        Duration: "<<Options.duration            <<" d"<<endl;
     cout <<"       Time step: "<<Options.timestep            <<" d ("<<(Options.timestep*MIN_PER_DAY)<<" min)"<<endl;
     cout <<"  Watershed Area: "<<_WatershedArea              <<" km2 (simulated) of "<<allarea<<" km2"<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
     cout <<endl;
 
   }

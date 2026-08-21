@@ -104,7 +104,7 @@ void CModel::UpdateHRUForcingFunctions(const optStruct &Options,
       if(_pGauges[g]->TimeSeriesExists(F_PRECIP)){//if precip exists, others exist
         Fg[g].precip          =_pGauges[g]->GetForcingValue(F_PRECIP,nn);     //mm/d
         Fg[g].precip_daily_ave=_pGauges[g]->GetForcingValue(F_PRECIP,model_day,1);
-        Fg[g].precip_5day     =_pGauges[g]->GetForcingValue(F_PRECIP,t-5.0,5.0)*5.0;
+        Fg[g].precip_5day     =_pGauges[g]->GetForcingValue(F_PRECIP,t-5.0,5.0)*5.0; //mm
         Fg[g].snow_frac       =_pGauges[g]->GetAverageSnowFrac(nn);
       }
     }

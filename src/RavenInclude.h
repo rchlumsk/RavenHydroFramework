@@ -106,7 +106,7 @@ extern double g_min_storage;      ///< minimum soil storage
 extern int    g_current_e;        ///< current ensemble member index
 
 // Model version
-const std::string __RAVEN_VERSION__   ="4.12";
+const std::string __RAVEN_VERSION__   ="4.15";
 //*****************************************************************
 // Global Constants
 //*****************************************************************
@@ -580,7 +580,7 @@ enum subdaily_method
 {
   SUBDAILY_NONE,            ///< no correction for daily average values used
   SUBDAILY_SIMPLE,          ///< Use half-sine wave pulse from dawn to dusk
-  SUBDAILY_UBC,             ///< from UBCWM - based upon cumulative temperature hours above zero Celsius
+  SUBDAILY_UBC              ///< from UBCWM - based upon cumulative temperature hours above zero Celsius
 };
 ////////////////////////////////////////////////////////////////////
 /// \brief Representations of soil characteristic curves
@@ -639,7 +639,7 @@ enum windvel_method
   WINDVEL_UBCWM,            ///< from UBC Watershed model: daily temperature range-based
   WINDVEL_UBC_MOD,          ///< simplified version of UBCWM algorithm (linear relationship with T_max-T_min)
   WINDVEL_SQRT,             ///< linear relationshipw with sqrt(T_max-T_min)
-  WINDVEL_LOG,              ///< linear relationship with ln(T_max-T_min)
+  WINDVEL_LOG               ///< linear relationship with ln(T_max-T_min)
 };
 ////////////////////////////////////////////////////////////////////
 /// \brief Methods of approximating vertical wind profile

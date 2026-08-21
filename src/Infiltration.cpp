@@ -17,19 +17,22 @@ CmvInfiltration::CmvInfiltration(infil_type itype,
 {
   type =itype;
   CHydroProcessABC::DynamicSpecifyConnections(2);
-  //infiltration (ponded-->soil)
   iFrom[0]=pModel->GetStateVarIndex(PONDED_WATER);      iTo  [0]=pModel->GetStateVarIndex(SOIL,0);
-  //runoff/remainder (ponded->surface water)
   iFrom[1]=pModel->GetStateVarIndex(PONDED_WATER);      iTo  [1]=pModel->GetStateVarIndex(SURFACE_WATER);
 
-  if (itype==INF_GA_SIMPLE)
+  if (type==INF_GA_SIMPLE)
   {
     CHydroProcessABC::DynamicSpecifyConnections(4);
-
     iFrom[0]=pModel->GetStateVarIndex(PONDED_WATER);     iTo  [0]=pModel->GetStateVarIndex(SOIL,0);
     iFrom[1]=pModel->GetStateVarIndex(PONDED_WATER);     iTo  [1]=pModel->GetStateVarIndex(SURFACE_WATER);
     iFrom[2]=pModel->GetStateVarIndex(CUM_INFIL);        iTo  [2]=pModel->GetStateVarIndex(CUM_INFIL);
     iFrom[3]=pModel->GetStateVarIndex(GA_MOISTURE_INIT); iTo  [3]=pModel->GetStateVarIndex(GA_MOISTURE_INIT);
+  }
+  else if (type==INF_SCS){
+    CHydroProcessABC::DynamicSpecifyConnections(3);
+    iFrom[0]=pModel->GetStateVarIndex(PONDED_WATER);      iTo  [0]=pModel->GetStateVarIndex(SOIL,0);
+    iFrom[1]=pModel->GetStateVarIndex(PONDED_WATER);      iTo  [1]=pModel->GetStateVarIndex(SURFACE_WATER);
+    iFrom[2]=pModel->GetStateVarIndex(CUM_INFIL);         iTo  [2]=pModel->GetStateVarIndex(CUM_INFIL);
   }
   else if (type==INF_UBC){
     CHydroProcessABC::DynamicSpecifyConnections(5);
@@ -260,6 +263,11 @@ void CmvInfiltration::GetParticipatingStateVarList(infil_type  itype,sv_type *aS
     aSV[2]=CONVOLUTION;    aLev[2]=0;
     aSV[3]=CONVOLUTION;    aLev[3]=1;
   }
+  else if ((itype==INF_SCS) || (itype==INF_SCS_NOABSTRACTION))
+  { 
+    nSV=3;
+    aSV[2]=CUM_INFIL;    aLev[2]=0;
+  }
   //...
 }
 
@@ -341,6 +349,13 @@ void CmvInfiltration::GetRatesOfChange (const double              *state_vars,
     runoff=(Fimp)*rainthru+(1-Fimp)*runoff; //correct for impermeable surfaces
     rates[0]=rainthru-runoff;
     rates[1]=runoff;
+
+    if (rainthru>=0.001){
+      rates[2]=rates[0]; //change to cumulative infil for hourly model; daily model treats each day as event
+    }
+    else {
+      rates[2]=-state_vars[iFrom[2]]/Options.timestep; //revert to zero cum infil after one dry timestep
+    }
   }
   //-----------------------------------------------------------------
   else if (type==INF_ALL_INFILTRATES)
@@ -645,9 +660,12 @@ double CmvInfiltration::GetSCSRunoff(const CHydroUnit *pHRU,
   double S,CN,W,Weff;     //retention parameter [mm], CNII, rainfall [mm], runoff [mm]
   double TR;              //total rain over past 5 days [in]
   double Ia;              //initial abstraction, [mm]
+  double cum_infil;
+  int iCumInf=pModel->GetStateVarIndex(CUM_INFIL);
 
   TR=pHRU->GetForcingFunctions()->precip_5day/MM_PER_INCH;
   CN=pHRU->GetSurfaceProps()->SCS_CN;
+  cum_infil=pHRU->GetStateVarValue(iCumInf);
 
   //correct curve number for antecedent moisture conditions
   if((tt.month>4) && (tt.month<9)) {//growing season?? (northern hemisphere)
@@ -677,7 +695,10 @@ double CmvInfiltration::GetSCSRunoff(const CHydroUnit *pHRU,
     //Note: when tied to an SCS Abstraction algorithm which explicitly tracks depression storage
     //"rainthru" is what remains after abstraction, i.e., W=W-Ia, or SCS_Ia_fraction=0.0
   }
-  Weff=pow(threshPositive(W-Ia),2)/(W+(S-Ia));//[mm]
+  
+  Ia-=min(cum_infil,Ia); //remove abstraction from previous timesteps in event
+
+  Weff=pow(max(W-Ia,0.0),2)/(W+(S-Ia));//[mm]
   if (W+(S-Ia)==0.0){Weff=0.0;}
 
   return Weff/Options.timestep;

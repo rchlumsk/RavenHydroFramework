@@ -53,9 +53,9 @@ bool ParseGWFile(CModel*& pModel, const optStruct& Options)
   CParser* pMainParser = NULL; //for storage of main parser while reading secondary files
 
   if (Options.noisy) {
-    cout << "======================================================" << endl;
+    cout << "=============================================================" << endl;
     cout << "Parsing Groundwater File " << Options.rvg_filename << "..." << endl;
-    cout << "======================================================" << endl;
+    cout << "=============================================================" << endl;
   }
 
   //Default Values
