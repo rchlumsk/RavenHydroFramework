@@ -19,8 +19,15 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           disable-sudo: false
-          egress-policy: audit
-
+          egress-policy: block
+          allowed-endpoints: >
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            motd.ubuntu.com:443
+            packages.microsoft.com:443
+            pypi.org:443
       - name: Checkout Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -73,7 +80,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libnetcdf-dev
       - name: Install NetCDF4 (macOS/homebrew)
-        if: matrix.os == 'macos-latest'
+        if: (matrix.os == 'macos-latest') && (!matrix.conda)
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3.0
         with:
           tools: netcdf
