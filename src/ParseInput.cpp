@@ -35,6 +35,7 @@
 #include "FrozenLake.h"
 #include "EnKF.h"
 #include "AgeTracers.h"
+#include "FrozenGround.h"
 
 bool ParseMainInputFile        (CModel *&pModel, optStruct &Options);
 bool ParseClassPropertiesFile  (CModel *&pModel, const optStruct &Options, bool &terrain_required);
@@ -211,9 +212,9 @@ bool ParseMainInputFile (CModel     *&pModel,
   tmpLev = new int    [MAX_STATE_VARS];
 
   if (Options.noisy){
-    cout <<"======================================================"<<endl;
-    cout << "Parsing Input File " << Options.rvi_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
+    cout << "Parsing Input File " << Options.rvi_filename <<"..."         <<endl;
+    cout <<"============================================================="<<endl;
   }
 
   INPUT.open(Options.rvi_filename.c_str());
@@ -265,6 +266,7 @@ bool ParseMainInputFile (CModel     *&pModel,
   Options.LW_radiation            =LW_RAD_DEFAULT;
   Options.LW_incoming             =LW_INC_DEFAULT;
   Options.SW_radiation            =SW_RAD_DEFAULT;
+  Options.SW_radia_diff           =DIFFSWRAD_NONE;
   Options.cloud_cover             =CLOUDCOV_NONE;
   Options.SW_canopycorr           =SW_CANOPY_CORR_NONE;
   Options.SW_cloudcovercorr       =SW_CLOUD_CORR_NONE;
@@ -300,6 +302,7 @@ bool ParseMainInputFile (CModel     *&pModel,
     Options.silent                =false;
   }
   Options.output_format           =OUTPUT_STANDARD;
+  Options.suppress_output         =false;
   Options.write_forcings          =false;
   Options.write_mass_bal          =false;
   Options.write_exhaustiveMB      =false;
@@ -346,6 +349,8 @@ bool ParseMainInputFile (CModel     *&pModel,
   Options.paraminfo_filename      ="";
   Options.flowinfo_filename       ="";
   Options.glacier_model_on        =false;
+  Options.forcing_slider          =false;
+  Options.slider_weight           =1.0; //gridded
 
   Options.NetCDF_chunk_mem        =10; //MB
 
@@ -443,7 +448,8 @@ bool ParseMainInputFile (CModel     *&pModel,
     else if  (!strcmp(s[0],":SuppressCompetitiveET"     )){code=48; }
     else if  (!strcmp(s[0],":SnowSuppressesPET"         )){code=49; }
     else if  (!strcmp(s[0],":AllowSoilOverfill"         )){code=491;}
-
+    else if  (!strcmp(s[0],":ForcingSlider"             )){code=492;}
+    else if  (!strcmp(s[0],":DiffuseSWMethod"           )){code=493;}
 	//---I/O------------------------------------------------------
     else if  (!strcmp(s[0],":DebugMode"                 )){code=50; }
     else if  (!strcmp(s[0],":BenchmarkingMode"          )){code=51; }
@@ -501,6 +507,7 @@ bool ParseMainInputFile (CModel     *&pModel,
     else if  (!strcmp(s[0],":NetCDFUseBasinFullname"    )){code=115;}
     else if  (!strcmp(s[0],":UncertaintyAnalysis"       )){code=116;}
 
+    if       (Len==0) {}
     else if  (!strcmp(s[0],":WriteGroundwaterHeads"     )){code=510;}//GWMIGRATE -TO REMOVE
     else if  (!strcmp(s[0],":WriteGroundwaterFlows"     )){code=511;}//GWMIGRATE -TO REMOVE
     else if  (!strcmp(s[0],":rvg_Filename"              )){code=512;}//GWMIGRATE -TO REMOVE
@@ -593,6 +600,7 @@ bool ParseMainInputFile (CModel     *&pModel,
     else if  (!strcmp(s[0],":SnowRedistribute"          )){code=241;}
     else if  (!strcmp(s[0],":GlacierIceFlow"            )){code=242;}
     else if  (!strcmp(s[0],":FirnEvolution"             )){code=243;}
+    else if  (!strcmp(s[0],":SoilFreezing"              )){code=244;}
     //...
     else if  (!strcmp(s[0],":-->RedirectFlow"           )){code=294;}
     else if  (!strcmp(s[0],":ProcessGroup"              )){code=295;}
@@ -815,7 +823,6 @@ bool ParseMainInputFile (CModel     *&pModel,
       else if (!strcmp(s[1],"ROUTE_HYDROLOGIC"       )){Options.routing =ROUTE_HYDROLOGIC;}
       else if (!strcmp(s[1],"ROUTE_NONE"             )){Options.routing =ROUTE_NONE;}
       else if (!strcmp(s[1],"ROUTE_EXTERNAL"         )){Options.routing =ROUTE_EXTERNAL;}
-      else if (!strcmp(s[1],"ROUTE_TVD"              )){Options.routing =ROUTE_TVD;}
       else if (!strcmp(s[1],"NONE"                   )){Options.routing =ROUTE_NONE;}
       else{
         ExitGracefully("ParseMainInputFile: Unrecognized routing method",BAD_DATA_WARN);
@@ -1188,6 +1195,7 @@ bool ParseMainInputFile (CModel     *&pModel,
       else if (!strcmp(s[1],"SUBDAILY_NONE"        )){Options.subdaily=SUBDAILY_NONE;}
       else if (!strcmp(s[1],"SUBDAILY_SIMPLE"      )){Options.subdaily=SUBDAILY_SIMPLE;}
       else if (!strcmp(s[1],"SUBDAILY_UBC"         )){Options.subdaily=SUBDAILY_UBC;}
+      else if (!strcmp(s[1],"SUBDAILY_HOURLY_MELT" )){Options.subdaily=SUBDAILY_HOURLY_MELT;}
       else {ExitGracefully("ParseInput:SubdailyMethod: Unrecognized method",BAD_DATA_WARN);}
       break;
     }
@@ -1432,6 +1440,27 @@ bool ParseMainInputFile (CModel     *&pModel,
       Options.allow_soil_overfill =true;
       break;
     }
+    case(492): //--------------------------------------------
+    {/*:ForcingSlider [double slider_val] */
+      if(Options.noisy) { cout <<"Allow soil compartments to overfill"<<endl; }
+      Options.forcing_slider =true;
+      Options.slider_weight  =s_to_d(s[1]);
+      if ((Options.slider_weight<0) || (Options.slider_weight>1.0)){
+        ExitGracefully("ParseMainInputFile: :ForcingSlider value muse be between 0 and 1",BAD_DATA_WARN);
+      }
+      break;
+    }
+    case(493): //----------------------------------------------
+    {/*:DiffuseSWMethod  [string method] */
+      if (Options.noisy) {cout <<"Diffuse Shortwave Radiation Estimation Method (for correcting radiation data)"<<endl;}
+      if (Len<2){ImproperFormatWarning(":SWRadiationMethod",p,Options.noisy); break;}
+      if      (!strcmp(s[1],"DIFFSWRAD_DATA"      )){Options.SW_radia_diff=DIFFSWRAD_DATA;}
+      else if (!strcmp(s[1],"DIFFSWRAD_DIRECT"    )){Options.SW_radia_diff=DIFFSWRAD_DIRECT;}
+      else if (!strcmp(s[1],"DIFFSWRAD_RUIZ_ARIAS")){Options.SW_radia_diff=DIFFSWRAD_RUIZ_ARIAS;}
+      else if (!strcmp(s[1],"DIFFSWRAD_NONE"      )){Options.SW_radia_diff=DIFFSWRAD_NONE;}
+      else {ExitGracefully("ParseInput:DiffuseSWMethod: Unrecognized method",BAD_DATA_WARN);}
+      break;
+    }
     case(50):  //--------------------------------------------
     {/*:DebugMode */
       if (Options.noisy){cout <<"Debug Mode ON"<<endl;}
@@ -1603,7 +1632,7 @@ bool ParseMainInputFile (CModel     *&pModel,
     case(69):  //--------------------------------------------
     {/*:SuppressOutput */
       if(Options.noisy) { cout <<"Suppressing output"<<endl; }
-      Options.output_format=OUTPUT_NONE;
+      Options.suppress_output=true;
       break;
     }
     case(70):  //--------------------------------------------
@@ -2314,7 +2343,7 @@ bool ParseMainInputFile (CModel     *&pModel,
       else if (!strcmp(s[1],"INF_SCS_NOABSTRACTION")){itype=INF_SCS_NOABSTRACTION;  }
       else if (!strcmp(s[1],"INF_HMETS"            )){itype=INF_HMETS;     }
       else if (!strcmp(s[1],"INF_ALL_INFILTRATES"  )){itype=INF_ALL_INFILTRATES; }
-      else if (!strcmp(s[1],"INF_XINANXIANG"       )){itype=INF_XINANXIANG; }
+      else if (!strcmp(s[1],"INF_XAJ"              )){itype=INF_XAJ; }
       else if (!strcmp(s[1],"INF_PDM"              )){itype=INF_PDM; }
       else if (!strcmp(s[1],"INF_AWBM"             )){itype=INF_AWBM; }
       else {
@@ -3218,6 +3247,26 @@ bool ParseMainInputFile (CModel     *&pModel,
       AddProcess(pModel, pMover, pProcGroup);
       break;
     }
+    case(244):  //----------------------------------------------
+    {/* Soil Freezing
+       :SoilFreezing [string method]*/
+      if (Options.noisy){cout <<"Soil Freezing Process"<<endl;}
+      if (Len<2){ImproperFormatWarning(":SoilFreezing",p,Options.noisy); break;}
+      groundfreeze_type gf_type=FREEZE_STEFAN;
+      if      (!strcmp(s[1],"FREEZE_STEFAN"    )){gf_type=FREEZE_STEFAN;}
+      else if (!strcmp(s[1],"FREEZE_THERMAL"   )){gf_type=FREEZE_THERMAL;}
+      else if (!strcmp(s[1],"FREEZE_RANKINEN"  )){gf_type=FREEZE_RANKINEN;}
+      else {
+        ExitGracefully("ParseMainInputFile: Unrecognized soil freezing process representation",BAD_DATA_WARN); break;
+      }
+
+      CmvFrozenGround::GetParticipatingStateVarList(gf_type,tmpS,tmpLev,tmpN);
+      pModel->AddStateVariables(tmpS,tmpLev,tmpN);
+
+      pMover = new CmvFrozenGround(gf_type, pModel);
+      AddProcess(pModel, pMover, pProcGroup);
+      break;
+    }
     case(294):  //----------------------------------------------
     {/*:-->RedirectFlow
      :-->RedirectFlow  [old 'To' SV] [new 'To' SV]*/
@@ -3311,6 +3360,17 @@ bool ParseMainInputFile (CModel     *&pModel,
 
       //Dynamically generate connections used in precipitation - requires specification of all other processes (and corresponding water SVs)
       if (pPrecip!=NULL){pPrecip->Initialize();}
+
+      // Add TOTAL_SWE state variable if any snow is simulated
+      if (pModel->GetStateVarIndex(SNOW) != DOESNT_EXIST) {
+        tmpS[0] = TOTAL_SWE; tmpLev[0]=0; tmpN=1;
+        pModel->AddStateVariables(tmpS,tmpLev,tmpN);
+      }
+      // Add GLACIER_MB state variable if any glacier is simulated
+      if (pModel->GetStateVarIndex(GLACIER_ICE) != DOESNT_EXIST){
+        tmpS[0] = GLACIER_MB; tmpLev[0]=0; tmpN=1;
+        pModel->AddStateVariables(tmpS,tmpLev,tmpN);
+      }
 
       //must be done after processes are initialized (partition precip, in particular), but before constituents are added
       if (Options.noisy){ cout<<"Preparing Transport Model..."<<endl;}
@@ -3579,7 +3639,7 @@ bool ParseMainInputFile (CModel     *&pModel,
       if (is_temp) {c=pModel->GetTransportModel()->GetConstituentIndex("TEMPERATURE");}
       else         {c=pModel->GetTransportModel()->GetConstituentIndex(s[1]);         }
 
-      if(c!=DOESNT_EXIST) 
+      if(c!=DOESNT_EXIST)
       {
         int kk = DOESNT_EXIST;
         if (Len > 3+add){ //read SB Group, if present
@@ -3771,16 +3831,7 @@ bool ParseMainInputFile (CModel     *&pModel,
   } //end while (!end_of_file)
   INPUT.close();
 
-  // Add TOTAL_SWE state variable if any snow is simulated
-  if (pModel->GetStateVarIndex(SNOW) != DOESNT_EXIST) {
-    tmpS[0] = TOTAL_SWE; tmpLev[0]=0; tmpN=1;
-    pModel->AddStateVariables(tmpS,tmpLev,tmpN);
-  }
-  // Add GLACIER_MB state variable if any glacier is simulated
-  if (pModel->GetStateVarIndex(GLACIER_ICE) != DOESNT_EXIST){
-    tmpS[0] = GLACIER_MB; tmpLev[0]=0; tmpN=1;
-    pModel->AddStateVariables(tmpS,tmpLev,tmpN);
-  }
+
 
 
   //===============================================================================================
@@ -3858,7 +3909,6 @@ int  ParseSVTypeIndex(string s, CModel *pModel, CStateVariable *pStateVar)
 
   if (typ==UNRECOGNIZED_SVTYPE)
   {
-    //if IsNumeric(s){
     return DOESNT_EXIST;
   }
 

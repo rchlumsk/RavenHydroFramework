@@ -113,9 +113,9 @@ int CTransportModel::GetLayerIndexFromName2(const string name,const int comp_m) 
 
   if(name.substr(0,1)!="!") { return DOESNT_EXIST; }//bad format, no leading "!"
 
-  tmp=name.substr(1,name.length()-1);             //trim leading '!'
-  k=(int)(tmp.find_first_of("|"));                //find char index of "|"
-  if(k==DOESNT_EXIST) { return DOESNT_EXIST; }    //bad format, no "|"
+  tmp=name.substr(1,name.length()-1);              //trim leading '!'
+  k=(int)(tmp.find_first_of("|"));                 //find char index of "|"
+  if(k==DOESNT_EXIST) { return DOESNT_EXIST; }     //bad format, no "|"
 
   constituent_name=tmp.substr(0,k);
   compartment_name=tmp.substr(k+1,tmp.length()-k);
@@ -673,13 +673,13 @@ void CTransportModel::Prepare(const optStruct &Options)
   //Synopsis
   //----------------------------------------------------------------------------
   if(!Options.silent) {
-    cout<<"===TRANSPORT MODEL SUMMARY=============================="<<endl;
+    cout<<"===TRANSPORT MODEL SUMMARY==================================="<<endl;
     cout<<"   number of compartments: "<<_nWaterCompartments<<endl;
     cout<<"   number of constituents: "<<_nConstituents<<endl;
     cout<<"   number of connections:  "<<_nAdvConnections<<endl;
     cout<<"   number of lat. connect.:"<<_nLatConnections<<endl;
     //cout<<"   number of source terms: "<<_nSources<<endl;
-    cout<<"========================================================"<<endl;
+    cout<<"============================================================="<<endl;
     // TMP DEBUG below===================================================
     /*if (false){
     for (int i=0;i<_nAdvConnections;i++)

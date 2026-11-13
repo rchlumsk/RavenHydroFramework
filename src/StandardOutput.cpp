@@ -173,7 +173,11 @@ void CModel::WriteOutputFileHeaders(const optStruct &Options)
 
   if(Options.noisy) { cout<<"  Writing Output File Headers..."<<endl; }
 
-  if (Options.output_format==OUTPUT_STANDARD)
+  if     (Options.suppress_output)
+  {
+    //do nothing
+  }
+  else if(Options.output_format==OUTPUT_STANDARD)
   {
 
     //WatershedStorage.csv
@@ -359,13 +363,13 @@ void CModel::WriteOutputFileHeaders(const optStruct &Options)
       if (_FORCINGS.fail()){
         ExitGracefully(("CModel::WriteOutputFileHeaders: Unable to open output file "+tmpFilename+" for writing.").c_str(),FILE_OPEN_ERR);
       }
-      _FORCINGS<<"time [d], date, hour, day_angle,";
-      _FORCINGS<<" rain [mm/d], snow [mm/d], temp [C], temp_daily_min [C], temp_daily_max [C],temp_daily_ave [C],temp_monthly_min [C],temp_monthly_max [C],";
-      _FORCINGS<<" air_density [kg/m3], air_pressure [KPa], rel_humidity [-],";
-      _FORCINGS<<" cloud_cover [-],";
-      _FORCINGS<<" ET_radiation [MJ/m2/d], SW_radiation [MJ/m2/d], net_SW_radiation [MJ/m2/d], LW_incoming [MJ/m2/d], net_LW_radiation [MJ/m2/d], wind_speed [m/s],";
-      _FORCINGS<<" PET [mm/d], OW_PET [mm/d],";
-      _FORCINGS<<" daily_correction [-], potential_melt [mm/d]";
+      _FORCINGS<<"time [d],date,hour,day_angle,";
+      _FORCINGS<<"rain [mm/d],snow [mm/d],temp [C],temp_daily_min [C],temp_daily_max [C],temp_daily_ave [C],temp_monthly_min [C],temp_monthly_max [C],";
+      _FORCINGS<<"air_density [kg/m3],air_pressure [KPa],rel_humidity [-],";
+      _FORCINGS<<"cloud_cover [-],";
+      _FORCINGS<<"ET_radiation [MJ/m2/d],SW_radiation [MJ/m2/d],SW_diffuse [MJ/m2/d],net_SW_radiation [MJ/m2/d],LW_incoming [MJ/m2/d],net_LW_radiation [MJ/m2/d],wind_speed [m/s],";
+      _FORCINGS<<"PET [mm/d],OW_PET [mm/d],";
+      _FORCINGS<<"daily_correction [-],potential_melt [mm/d]";
       _FORCINGS<<endl;
     }
   }
@@ -381,7 +385,7 @@ void CModel::WriteOutputFileHeaders(const optStruct &Options)
   //Demands.csv
   //--------------------------------------------------------------
   CSubBasin *pSB;
-  if((Options.write_demandfile) && (Options.output_format!=OUTPUT_NONE))
+  if((Options.write_demandfile) && (!Options.suppress_output))
   {
     tmpFilename=FilenamePrepare("Demands.csv",Options);
     _DEMANDS.open(tmpFilename.c_str());
@@ -607,7 +611,7 @@ void CModel::WriteOutputFileHeaders(const optStruct &Options)
 
   // Assimilation adjustments
   //--------------------------------------------------------------
-  if (Options.assimilate_flow){
+  if ((Options.assimilate_flow) && (!Options.suppress_output)) {
     ofstream ASSIM;
     tmpFilename=FilenamePrepare("AssimilationAdjustments_BySubbasin.csv",Options);
     ASSIM.open(tmpFilename.c_str());
@@ -634,11 +638,13 @@ void CModel::WriteOutputFileHeaders(const optStruct &Options)
 
   // Transport output files
   //--------------------------------------------------------------
-  _pTransModel->WriteOutputFileHeaders(Options);
+  if (!Options.suppress_output){
+    _pTransModel->WriteOutputFileHeaders(Options);
+  }
 
   // Management output files
   //--------------------------------------------------------------
-  if (Options.management_optimization) {
+  if ((Options.management_optimization) && (!Options.suppress_output)) {
     _pDO->WriteOutputFileHeaders(Options);
   }
 
@@ -738,10 +744,15 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
       else     {cout <<" | P: ------";}
     }
 
-    //Write current state of water storage in system to WatershedStorage.csv (ALWAYS DONE if not switched OFF)
-    //----------------------------------------------------------------
-    if (Options.output_format==OUTPUT_STANDARD)
+
+    if(Options.suppress_output)
     {
+      //do nothing
+    }
+    else if (Options.output_format==OUTPUT_STANDARD)
+    {
+      //Write current state of water storage in system to WatershedStorage.csv (ALWAYS DONE if not switched OFF)
+      //----------------------------------------------------------------
       if (Options.write_watershed_storage)
       {
         double snowfall      =GetAverageSnowfall();
@@ -786,7 +797,6 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
 
       //Write hydrographs for gauged watersheds to Hydrographs.csv (ALWAYS DONE)
       //----------------------------------------------------------------
-
       if (Options.ave_hydrograph)
       {
         _HYDRO<<usetime<<","<<usedate<<","<<usehour;
@@ -907,6 +917,36 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
           _HYDRO<<endl;
         }
       }
+
+      //ReservoirStages.csv
+      //--------------------------------------------------------------
+      if (Options.write_reservoir)
+      {
+        int nn=(int)((tt.model_time+TIME_CORRECTION)/Options.timestep);//current timestep index
+
+        if((Options.period_starting) && (t==0)){}//don't write anything at time zero
+        else{
+	      _RESSTAGE<< t<<","<<thisdate<<","<<thishour<<","<<GetAveragePrecip();
+	      for (int p=0;p<_nSubBasins;p++)
+          {
+            pSB=_pSubBasins[p];
+	          if ((pSB->IsGauged())  && (pSB->IsEnabled()) && (pSB->GetReservoir()!=NULL))
+            {
+	            _RESSTAGE<<","<<pSB->GetReservoir()->GetResStage();
+
+	            for (i = 0; i < _nObservedTS; i++){
+	              if (IsContinuousStageObs(_pObservedTS[i],pSB->GetID()))
+	              {
+                  val = _pObservedTS[i]->GetAvgValue(tt.model_time,Options.timestep);
+	                if ((val != RAV_BLANK_DATA) && (tt.model_time>0)){ _RESSTAGE << "," << val; }
+	                else                                             { _RESSTAGE << ",";        }
+	              }
+              }
+            }
+          }
+	        _RESSTAGE<<endl;
+			  }
+      }
     }
     else if (Options.output_format==OUTPUT_ENSIM)
     {
@@ -979,7 +1019,6 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
     }
 
     //WaterLevels.csv
-    //Write hydrographs for gauged watersheds (ALWAYS DONE)
     //----------------------------------------------------------------
     if (Options.write_waterlevels)
     {
@@ -1009,43 +1048,11 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
       }
     }
 
-
-
-    //ReservoirStages.csv
-    //--------------------------------------------------------------
-    if ((Options.write_reservoir) && (Options.output_format==OUTPUT_STANDARD))
-    {
-      int nn=(int)((tt.model_time+TIME_CORRECTION)/Options.timestep);//current timestep index
-
-      if((Options.period_starting) && (t==0)){}//don't write anything at time zero
-      else{
-	    _RESSTAGE<< t<<","<<thisdate<<","<<thishour<<","<<GetAveragePrecip();
-	    for (int p=0;p<_nSubBasins;p++)
-        {
-          pSB=_pSubBasins[p];
-	        if ((pSB->IsGauged())  && (pSB->IsEnabled()) && (pSB->GetReservoir()!=NULL))
-          {
-	          _RESSTAGE<<","<<pSB->GetReservoir()->GetResStage();
-
-	          for (i = 0; i < _nObservedTS; i++){
-	            if (IsContinuousStageObs(_pObservedTS[i],pSB->GetID()))
-	            {
-                val = _pObservedTS[i]->GetAvgValue(tt.model_time,Options.timestep);
-	              if ((val != RAV_BLANK_DATA) && (tt.model_time>0)){ _RESSTAGE << "," << val; }
-	              else                                             { _RESSTAGE << ",";        }
-	            }
-            }
-          }
-        }
-	      _RESSTAGE<<endl;
-			}
-    }
-
     // Demands.csv
     //----------------------------------------------------------------
     double irr,Qd,Qr,Q,eF;
     double demsum,delsum,retsum;
-    if((Options.write_demandfile) && (Options.output_format!=OUTPUT_NONE))
+    if((Options.write_demandfile) && (!Options.suppress_output))
     {
       if((Options.period_starting) && (t==0)) {}//don't write anything at time zero
       else {
@@ -1154,7 +1161,6 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
         RES_MB.close();
       }
     }
-
 
     // ExhaustiveMassBalance.csv
     //--------------------------------------------------------------
@@ -1269,6 +1275,7 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
         _FORCINGS<<pFave->cloud_cover<<",";
         _FORCINGS<<pFave->ET_radia<<",";
         _FORCINGS<<pFave->SW_radia<<",";
+        _FORCINGS<<pFave->SW_radia_diff<<",";
         _FORCINGS<<pFave->SW_radia_net<<",";
         //_FORCINGS<<pFave->SW_radia_subcan<<",";
         //_FORCINGS<<pFave->SW_subcan_net<<",";
@@ -1285,9 +1292,11 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
 
     // Transport output files
     //--------------------------------------------------------------
+    if(!Options.suppress_output){
     _pTransModel->WriteMinorOutput(Options,tt);
+    }
 
-    if (Options.management_optimization) {
+    if ((Options.management_optimization) && (!Options.suppress_output)){
       _pDO->WriteMinorOutput(Options,tt);
     }
 
@@ -1299,7 +1308,7 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
       tmpFilename=FilenamePrepare("raven_debug.csv",Options);
       DEBUG.open(tmpFilename.c_str(),ios::app);
       DEBUG<<t<<","<<thisdate<<","<<thishour;
-      for(i=0;i<10;i++){DEBUG<<","<<g_debug_vars[i];}
+      for(i=0;i<MAX_DEBUG_VARS;i++){DEBUG<<","<<g_debug_vars[i];}
       DEBUG<<endl;
       DEBUG.close();
     }
@@ -1340,7 +1349,7 @@ void CModel::WriteMinorOutput(const optStruct &Options,const time_struct &tt)
 
     // Assimilation adjustments
     //--------------------------------------------------------------
-    if (Options.assimilate_flow){
+    if ((Options.assimilate_flow) && (!Options.suppress_output)){
       ofstream ASSIM;
       tmpFilename=FilenamePrepare("AssimilationAdjustments_BySubbasin.csv",Options);
       ASSIM.open(tmpFilename.c_str(),ios::app);
@@ -1391,7 +1400,7 @@ void CModel::WriteMajorOutput(const time_struct &tt, string solfile, bool final)
   string tmpFilename;
   const optStruct* Options = this->_pOptStruct;  // just to make the code more readable
 
-  if (Options->output_format==OUTPUT_NONE){return;} //:SuppressOutput is on
+  if (Options->suppress_output==true){return;} //:SuppressOutput is on
 
   // WRITE {RunName}_solution.rvc - final state variables file
   ofstream RVC;
@@ -1646,7 +1655,7 @@ void CModel::SummarizeToScreen  (const optStruct &Options) const
 
   if(!Options.silent)
   {
-    cout <<"==MODEL SUMMARY======================================="<<endl;
+    cout <<"==MODEL SUMMARY=============================================="<<endl;
     cout <<"       Model Run: "<<Options.run_name    <<endl;
     cout <<"      Start time: "<<tt.date_string      <<endl;
     cout <<"        End time: "<<tt2.date_string     <<" (duration="<<Options.duration<<" days)"<<endl;
@@ -1675,7 +1684,7 @@ void CModel::SummarizeToScreen  (const optStruct &Options) const
     cout <<"        Duration: "<<Options.duration            <<" d"<<endl;
     cout <<"       Time step: "<<Options.timestep            <<" d ("<<(Options.timestep*MIN_PER_DAY)<<" min)"<<endl;
     cout <<"  Watershed Area: "<<_WatershedArea              <<" km2 (simulated) of "<<allarea<<" km2"<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
     cout <<endl;
 
   }
@@ -1884,8 +1893,8 @@ double CModel::CalculateAggDiagnostic(const int ii, const int j, const double &s
 void CModel::CalcUncertainty(const optStruct &Options)
 {
   if (_nObservedTS==0) { return; }
-  
-  if      (Options.uncert_method==UNCERTAINTY_NONE) 
+
+  if      (Options.uncert_method==UNCERTAINTY_NONE)
   {
     return;
   }
@@ -2384,6 +2393,7 @@ void CModel::WriteNetcdfStandardHeaders(const optStruct &Options)
     varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"net_SW_radiation","net SW radiation","MJ m**-2 d**-1");
     varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"LW_incoming","LW incoming","MJ m**-2 d**-1");
     varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"LW_radiation","LW radiation","MJ m**-2 d**-1");
+    varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"SW_radia_diff","Diffuse SW radiation","MJ m**-2 d**-1");
     //varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"SW_radia_subcan","SW subcanopy","MJ m**-2 d**-1");
     //varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"SW_subcan_net","net SW subcanopy","MJ m**-2 d**-1");
     varid= NetCDFAddMetadata(_FORCINGS_ncid,time_dimid,"wind_velocity","wind velocity","m s**-1");
@@ -2886,7 +2896,8 @@ void  CModel::WriteNetcdfMinorOutput ( const optStruct   &Options,
     AddSingleValueToNetCDF(_FORCINGS_ncid,"ET_radiation"     ,time_ind2,pFave->ET_radia);
     AddSingleValueToNetCDF(_FORCINGS_ncid,"SW_radiation"     ,time_ind2,pFave->SW_radia);
     AddSingleValueToNetCDF(_FORCINGS_ncid,"net_SW_radiation" ,time_ind2,pFave->SW_radia_net);
-    //AddSingleValueToNetCDF(_FORCINGS_ncid,"SW_radia_subcan"  ,time_ind2,pFave->SW_rad_subcanopy);
+    AddSingleValueToNetCDF(_FORCINGS_ncid,"SW_radia_diff"    ,time_ind2,pFave->SW_radia_diff);
+    //AddSingleValueToNetCDF(_FORCINGS_ncid,"SW_radia_subcan"  ,time_ind2,pFave->SW_radia_subcan);
     //AddSingleValueToNetCDF(_FORCINGS_ncid,"SW_subcan_net"    ,time_ind2,pFave->SW_subcan_net);
     AddSingleValueToNetCDF(_FORCINGS_ncid,"LW_incoming"      ,time_ind2,pFave->LW_incoming);
     AddSingleValueToNetCDF(_FORCINGS_ncid,"LW_radiation"     ,time_ind2,pFave->cloud_cover);

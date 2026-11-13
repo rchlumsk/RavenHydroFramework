@@ -179,7 +179,8 @@ struct veg_struct
   //Transport parameters
   double uptake_moderator   [MAX_CONSTITUENTS]; ///< [-] vegetation-specific uptake factor
 };
-
+const int NUM_VEG_PARAMETERS=65; //NEEDS TO BE UPDATED WHEN PARAMETER ADDED OR WHEN MAX_CONSTIUENTS CHANGES
+static_assert(offsetof(veg_struct, max_height) + NUM_VEG_PARAMETERS * sizeof(double) <= sizeof(veg_struct),"NUM_VEG_PARAMETERS is incorrect");
 ///////////////////////////////////////////////////////////////////
 /// \brief Contains derived vegetation / canopy / root properties - unique for each HRU
 //
@@ -254,6 +255,7 @@ struct surface_struct
   double rain_melt_mult;    ///< [-]       rain melt multiplier
   double bsnow_distrib;     ///< [-]       blowing snow distribution parameter
   double lakesnow_buffer_ht;///< [mmSWE]   height of snow above which potential melt energy doest reach lake ice
+  double snow_dampen_coeff; ///< [1/m]     thermal dampening coefficient for Raniken et al soil temp model
 
   //Glacier parameters
   double glac_storage_coeff;   ///< [-]    maximum linear storage coefficient for glacial melt =K*G
@@ -312,6 +314,7 @@ struct surface_struct
   double priestleytaylor_coeff; ///< [-]   Priestley-Taylor coefficient (defaults to 1.28)
   double pet_lin_coeff;     ///< [mm/d/K]  linear PET relation with temperature ~(0.1-0.3)
   double pet_vap_coeff;     ///< [mm/d/kPa] linear PET relation with vapor deficit ~(1-3 mm/d/kPa, ~1.5 for mountain streams)
+  double sublim_corr;       ///< [-]       correction to sublimation rate
 
   double relhum_corr;       ///< [-]       local correction factor for relative humidity (defaults to 1)
   double wind_vel_corr;     ///< [-]       local correction factor for wind speed (defaults to 1)
@@ -329,7 +332,8 @@ struct surface_struct
   double convection_coeff;  ///< [MJ/m2/d/K] thermal convection coefficieint q=h(T_a-T)
   double geothermal_grad;   ///< [C/m]     local geothermal gradient (positive upward)
 };
-
+const int NUM_LULT_PARAMETERS=87; //NEEDS TO BE UPDATED WHEN PARAMETER ADDED
+static_assert(offsetof(surface_struct, impermeable_frac) + NUM_LULT_PARAMETERS * sizeof(double) <= sizeof(surface_struct),"NUM_LULT_PARAMETERS is incorrect");
 //////////////////////////////////////////////////////////////////
 /// \brief Structure that, when instantiated, contains defining information that reflects the qualities of the terrain
 /// \note Calculated from topography, all are fixed with time

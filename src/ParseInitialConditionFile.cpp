@@ -50,9 +50,9 @@ bool ParseInitialConditionsFile(CModel *&pModel, const optStruct &Options)
   CParser *pMainParser=NULL; //for storage of main parser while reading secondary files
 
   if (Options.noisy){
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
     cout <<"Parsing Initial conditions File " << Options.rvc_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
   }
 
 

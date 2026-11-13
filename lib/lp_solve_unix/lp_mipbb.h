@@ -61,4 +61,3 @@ STATIC int run_BB(lprec *lp);
 #endif
 
 #endif /* HEADER_lp_mipbb */
-

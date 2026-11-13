@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------
   Raven Library Source Code
-  Copyright (c) 2008-2025 the Raven Development Team
+  Copyright (c) 2008-2026 the Raven Development Team
   ----------------------------------------------------------------
   DemandOptimization.h
   ----------------------------------------------------------------*/
@@ -19,9 +19,11 @@ namespace lp_lib  {
 #ifdef _WIN32
 #include "../lib/lp_solve/lp_lib.h"
 #else
-#include "../lib/lp_solve_unix/lp_lib.h"
+#include <lp_lib.h>
 #endif
 }
+//For Visual Studio needs only - tells to link to library, CMake handles via makefile
+#pragma comment(lib,"../lib/lp_solve/lpsolve55.lib" )
 #endif
 
 const double PENALTY_MAXIMUM=1000001; //1e6+1
@@ -177,12 +179,12 @@ struct managementGoal
 //
 struct workflowVar
 {
-  string            name;          //< workflow variable name
+  string            name;            //< workflow variable name
 
-  double            current_val;   //< current value of workflow variable (evaluated at start of time step)
-
-  op_regime       **pOperRegimes;  //< array of pointers to operating regimes, which are chosen from conditionals and determine active expression [size:nOperRegimes]
-  int               nOperRegimes;  //< size of operating regime array
+  double            current_val;     //< current value of workflow variable (evaluated at start of time step)
+  bool              iterate;         //< update during iteration because a non-linear variable (?x) is present
+  op_regime       **pOperRegimes;    //< array of pointers to operating regimes, which are chosen from conditionals and determine active expression [size:nOperRegimes]
+  int               nOperRegimes;    //< size of operating regime array
 
   workflowVar();
   ~workflowVar();
@@ -275,7 +277,7 @@ private: /*------------------------------------------------------*/
 
   //Called during simualtion
   void         UpdateHistoryArrays();
-  void     UpdateWorkflowVariables(const time_struct &tt,const optStruct &Options);
+  void     UpdateWorkflowVariables(const time_struct &tt,const optStruct &Options, int iter);
   bool     ConvertToExpressionTerm(const string s, expressionTerm* term, const int lineno, const string filename, const optStruct &Options)  const;
   int               GetDVColumnInd(const dv_type typ, const int counter) const;
   double              EvaluateTerm(expressionTerm **pTerms,const int k, const double &t) const;

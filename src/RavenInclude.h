@@ -17,10 +17,10 @@
 //#define _MODFLOW_USG_ // uncomment if compiling MODFLOW-USG coupled version of Raven
 //#define _STRICTCHECK_ // uncomment if strict checking should be enabled (slows down model)
 #ifndef _LPSOLVE_
-//#define _LPSOLVE_       // uncomment if compiling lpsolve Demand Optimization version of Raven
+//#define _LPSOLVE_     // uncomment if compiling lpsolve Demand Optimization version of Raven
 #endif
-#ifndef _BMI_LIBRARY_  //compiler or CMake flag
-#define STANDALONE    // comment out if compiling as DLL
+#ifndef _BMI_LIBRARY_   // compiler or CMake flag
+#define STANDALONE      // comment out if compiling as DLL
 #else
 #define BMI_LIBRARY
 #endif
@@ -95,8 +95,9 @@ Other comments:
 //*****************************************************************
 // Global Variables (necessary, but minimized, evils)
 //*****************************************************************
+const int MAX_DEBUG_VARS=10;
 extern string g_output_directory; ///< Had to be here to avoid passing Options structure around willy-nilly
-extern double g_debug_vars[10];   ///< can store any variables used during debugging; written to raven_debug.csv if debug_mode is on
+extern double g_debug_vars[MAX_DEBUG_VARS];   ///< can store any variables used during debugging; written to raven_debug.csv if debug_mode is on
 extern bool   g_suppress_warnings;///< Had to be here to avoid passing Options structure around willy-nilly
 extern string g_last_warning;     ///
 extern int    g_warn_count;
@@ -106,7 +107,7 @@ extern double g_min_storage;      ///< minimum soil storage
 extern int    g_current_e;        ///< current ensemble member index
 
 // Model version
-const std::string __RAVEN_VERSION__   ="4.12";
+const std::string __RAVEN_VERSION__   ="4.15";
 //*****************************************************************
 // Global Constants
 //*****************************************************************
@@ -187,6 +188,7 @@ const double  TC_WATER                =0.0492;                                  
 const double  TC_ICE                  =0.194;                                   ///< [MJ/m/d/K] Thermal conductivity of Ice (2.24 W/m/K)
 const double  TC_SAND                 =0.691;                                   ///< [MJ/m/d/K] Thermal conductivity of sand (8.0 W/m/K vs 8.8 in CLM)
 const double  TC_CLAY                 =0.216;                                   ///< [MJ/m/d/K] Thermal conductivity of clay (2.5 W/m/K vs 2.92 in CLM)
+const double  TC_SILT                 =0.4;                                     ///< [MJ/m/d/K] Thermal conductivity of silt (2.5 W/m/K vs 2.92 in CLM)
 const double  TC_ORGANIC              =0.0216;                                  ///< [MJ/m/d/K] Thermal conductivity of organic matter (0.25 W/m/K)
 const double  TC_AIR                  =0.00199;                                 ///< [MJ/m/d/K] Thermal conductivity of air (0.023 W/m/K)
 
@@ -196,6 +198,7 @@ const double  HCP_WATER               =4.186;                                   
 const double  HCP_ICE                 =1.938;                                   ///< [MJ/m3/K] Volumetric Heat Capacity of Ice
 const double  HCP_CLAY                =2.380;                                   ///< [MJ/m3/K] Volumetric Heat Capacity of Clay
 const double  HCP_SAND                =2.130;                                   ///< [MJ/m3/K] Volumetric Heat Capacity of Sand
+const double  HCP_SILT                =2.0;                                     ///< [MJ/m3/K] Volumetric Heat Capacity of Silt
 const double  HCP_ORGANIC             =2.500;                                   ///< [MJ/m3/K] Volumetric Heat Capacity of Organic Matter
 const double  HCP_AIR                 =0.00124;                                 ///< [MJ/m3/K] Volumetric Heat capacity of air
 
@@ -206,7 +209,7 @@ const double  SPH_VEGETATION          =2.700e-3;                                
 const double  SPH_AIR                 =1.012e-3;                                ///< [MJ/kg/K] Specific heat capacity of air
 
 const double  LH_FUSION               =0.334;                                   ///< [MJ/kg]  Latent heat of fusion
-const double  LH_VAPOR                =2.501;                                   ///< [MJ/kg]  Latent heat of vaporization
+const double  LH_VAPOR                =2.501;                                   ///< [MJ/kg]  Latent heat of vaporization (at zero degrees)
 const double  LH_SUBLIM               =2.845;                                   ///< [MJ/kg]  Latent heat of sublimation
 
 const double  EMISS_ATM               =0.985;                                   ///< [-] emissivity of the atmosphere and snowpack
@@ -404,7 +407,6 @@ enum routing_method
   ROUTE_DIFFUSIVE_WAVE,  ///< diffusive wave approximation
   ROUTE_DIFFUSIVE_VARY,  ///< variable celerity/diffusivity diffusive wave approach
   ROUTE_HYDROLOGIC,      ///< simple iterative mass balance approach dS/dt=I-O
-  ROUTE_TVD,             ///< Total variation diminishing approach of Schwanenberg and Montero, 2016
   ROUTE_EXTERNAL         ///< routing handled via external script/live file support
 };
 
@@ -581,6 +583,7 @@ enum subdaily_method
   SUBDAILY_NONE,            ///< no correction for daily average values used
   SUBDAILY_SIMPLE,          ///< Use half-sine wave pulse from dawn to dusk
   SUBDAILY_UBC,             ///< from UBCWM - based upon cumulative temperature hours above zero Celsius
+  SUBDAILY_HOURLY_MELT      ///< daily melt as average of 24 hourly melt rates from cosine-disaggregated Tmin/Tmax
 };
 ////////////////////////////////////////////////////////////////////
 /// \brief Representations of soil characteristic curves
@@ -639,7 +642,7 @@ enum windvel_method
   WINDVEL_UBCWM,            ///< from UBC Watershed model: daily temperature range-based
   WINDVEL_UBC_MOD,          ///< simplified version of UBCWM algorithm (linear relationship with T_max-T_min)
   WINDVEL_SQRT,             ///< linear relationshipw with sqrt(T_max-T_min)
-  WINDVEL_LOG,              ///< linear relationship with ln(T_max-T_min)
+  WINDVEL_LOG               ///< linear relationship with ln(T_max-T_min)
 };
 ////////////////////////////////////////////////////////////////////
 /// \brief Methods of approximating vertical wind profile
@@ -703,9 +706,19 @@ enum recharge_method
 enum netSWRad_method
 {
    NETSWRAD_DATA,          ///< data supplied
-   NETSWRAD_CALC           ///< determined via calculations
+   NETSWRAD_CALC           ///< determined via calculations (default)
 };
 
+////////////////////////////////////////////////////////////////////
+/// \brief Methods of estimating/generating diffuse shortwave radiation
+//
+enum SW_diff_method
+{
+   DIFFSWRAD_DATA,          ///< diffuse SW supplied
+   DIFFSWRAD_DIRECT,        ///< direct SW supplied 
+   DIFFSWRAD_RUIZ_ARIAS,    ///< diffusive calculated from Ruiz-Arias et al., 2010 
+   DIFFSWRAD_NONE           ///< treated as negligible (default)   
+};
 ////////////////////////////////////////////////////////////////////
 /// \brief Methods of handling snow cover depletion
 //
@@ -805,14 +818,20 @@ enum adjustment {
   ADJ_REPLACE
 };
 ////////////////////////////////////////////////////////////////////
+/// \brief transition function for land use/veg transitions
+//
+enum transition_function{
+  SHP_LINEAR,
+  SHP_POWER
+};
+////////////////////////////////////////////////////////////////////
 /// \brief Desired output format
 //
 enum out_format
 {
   OUTPUT_STANDARD,       ///< Output in default Raven format (.csv files)
   OUTPUT_ENSIM,          ///< Output in Ensim format (.tb0 files)
-  OUTPUT_NETCDF,         ///< Output in NetCDF format (.nc files)
-  OUTPUT_NONE            ///< Output is suppressed
+  OUTPUT_NETCDF          ///< Output in NetCDF format (.nc files)
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -857,7 +876,7 @@ enum assimtype
 {
   DA_ECCC           ///< additive assimilation upstream propagation
 };
-enum uncerttype  
+enum uncerttype
 {
   UNCERTAINTY_NONE,
   UNCERTAINTY_REM
@@ -869,7 +888,6 @@ enum uncerttype
 /// - CStateVariables::SVTypeToString  (defined in StateVariables.cpp)
 /// - CStateVariables::StringToSVType  (defined in StateVariables.cpp)
 /// - CStateVariables::IsWaterStorage  (defined in StateVariables.cpp)
-/// - CStateVariables::IsEnergyStorage (defined in StateVariables.cpp)
 /// - CHydroUnit::GetStateVarMax
 /// - CModel::PartitionPrecip (if it is a water storage unit recieving precipitation)
 ///
@@ -906,7 +924,7 @@ enum sv_type
   // Distribution tracking variables
   MIN_DEP_DEFICIT,         ///< [mm or -1..0] Minimum depression deficit (describes deficit distribution), =-percent full if negative
   CONTRIB_FRAC,            ///< [0..1] fraction contributing area of landscape to runoff
-  INFIL_CORR,              ///< [0..1] correction to infiltration rate due to frozen ground or dynamic wetland coverage
+  INFIL_CORR,              ///< [0..1] correction to infiltration rate due to dynamic wetland coverage
 
   // Memory/diagnostic  variables
   CUM_INFIL,               ///< [mm] Cumulative infiltration to topsoil
@@ -923,6 +941,7 @@ enum sv_type
   COLD_CONTENT,            ///< [C] Cold content of snowpack
   SOIL_TEMP,               ///< [C] Temperature of soil
   CANOPY_TEMP,             ///< [C] Temperature fo canopy
+  SOIL_PCT_FROZ,           ///< [0..1] % of SOIL[0] which is frozen (used for adjustment of all soil fluxes to/from soil)
 
   // Snow/Glacier variables
   SNOW_DEPTH,              ///< [mm] Snow depth - surrogate for density
@@ -1128,6 +1147,7 @@ struct optStruct
   SW_cloudcover_corr SW_cloudcovercorr;       ///< method for cloudcover correction of shortwave radiation
   SW_canopy_corr     SW_canopycorr;           ///< method for estimating canopy transmittance of shortwave radiation
   netSWRad_method    SW_radia_net;            ///< method for calculating net shortwave radiation (calculated or data)
+  SW_diff_method     SW_radia_diff;           ///< methods for calculating total diffusive incoming shortwave
   evap_method        evaporation;             ///< PET estimation method
   evap_method        ow_evaporation;          ///< Open Water PET estimation method
   evap_method        evap_infill;             ///< PET estimation method when infilling blank PET_DATA
@@ -1169,6 +1189,7 @@ struct optStruct
   bool             deltaresFEWS;              ///< true if input is generated by Deltares FEWS
   bool             use_fullname_cf_role;      ///< true if basin-linked NetCDF files use basin name as mapping key (rather than ID)
   out_format       output_format;             ///< output format (default: OUTPUT_STANDARD)
+  bool             suppress_output;           ///< true if suppressing standard output
   double           custom_interval;           ///< custom output interval (i.e., for generating 10-day interval outputs)
   bool             write_forcings;            ///< true if ForcingFunctions.csv is written
   bool             write_mass_bal;            ///< true if WatershedMassEnergyBalance.csv is written
@@ -1219,6 +1240,9 @@ struct optStruct
   bool             use_bmi_weather;           ///< true if forcings provided by BMI connection (no rvt, gauges, grids required)
   double           sv_override_endtime;       ///< model time [d] after which state variable overrides are disabled (default: 1e99)
   bool             glacier_model_on;          ///< explicitly tracks GLACIER_ICE rather than treating as infinite reservoir (default: false)
+
+  bool             forcing_slider;            ///< true to control slider between gridded and gauged data
+  double           slider_weight;             ///< [0..1] toggle between gauged (0) and gridded (1) data
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -1278,7 +1302,7 @@ enum forcing_type
   F_TEMP_AVE_UNC,   F_TEMP_MIN_UNC,     F_TEMP_MAX_UNC,
   F_AIR_PRES,       F_AIR_DENS,         F_REL_HUMIDITY,
   F_CLOUD_COVER,    F_SW_RADIA,         F_LW_RADIA_NET,   F_ET_RADIA,        F_ET_RADIA_FLAT,
-  F_SW_RADIA_NET,   F_SW_RADIA_UNC,     F_LW_INCOMING,    F_SW_RADIA_SUBCAN, F_SW_SUBCAN_NET,
+  F_SW_RADIA_NET,   F_SW_RADIA_UNC,     F_LW_INCOMING,    F_SW_RADIA_SUBCAN, F_SW_SUBCAN_NET, F_SW_RADIA_DIFF,F_SW_RADIA_DIRECT,
   F_DAY_LENGTH,     F_DAY_ANGLE,        F_WIND_VEL,
   F_PET,F_OW_PET,   F_PET_MONTH_AVE,
   F_SUBDAILY_CORR,  F_POTENTIAL_MELT,
@@ -1319,8 +1343,9 @@ struct force_struct
   double ET_radia;            ///< uncorrected extraterrestrial shortwave radiation, after slope correction [MJ/m2/d]
   double ET_radia_flat;       ///< uncorrected extraterrestrial shortwave radiation on horizontal surface [MJ/m2/d]
   double SW_radia_unc;        ///< uncorrected shortwave radiation (before cloud and canopy corrections, after slope)[MJ/m2/d]
-  double SW_radia;            ///< Incoming shortwave radiation (slope/air mass/horizon/cloud cover/canopy corrections applied, uncorrected for albedo) [MJ/m2/d]
-  double SW_radia_net;        ///< Net shortwave radiation at canopy top (albedo corrected) [MJ/m2/d]
+  double SW_radia;            ///< Incoming shortwave radiation (slope/air mass/horizon/cloud cover/canopy corrections applied, uncorrected for albedo) (includes diffusive)[MJ/m2/d]
+  double SW_radia_diff;       ///< Diffusive component of net shortwave at canopy top [MJ/m2/d]
+  double SW_radia_net;        ///< Net shortwave radiation at canopy top (albedo corrected; includes diffusive)  [MJ/m2/d]
   double SW_radia_subcan;     ///< Shortwave incoming radiation at ground beneath canopy [MJ/m2/d]
   double SW_subcan_net;       ///< Net shortwave incoming radiation on ground beneath canopy [MJ/m2/d]
   double LW_radia_net;        ///< Net longwave radiation [MJ/m2/d]
@@ -1735,6 +1760,7 @@ double IncompleteGamma  (const double &betat, const double &a);
 double TriCumDist       (const double &t, const double &tc, const double &tp);
 double NashCumDist      (const double &t, const double &k, const int &NR);
 double ADRCumDist       (const double &t, const double &L, const double &v, const double &D);
+double ADRCumDist2      (const double &t, const double &L, const double &v, const double &D);
 double DiffusiveWaveUH  (const int n, const double& L, const double& v, const double& D, const double& dt);
 double TimeVaryingADRCumDist(const double &t,const double &L,const double *v,int nv,const double &D,const double &dt);
 void   CalcWeightsFromUniformNums(const double* aVals, double* aWeights, const int N);

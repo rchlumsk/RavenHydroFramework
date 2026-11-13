@@ -161,6 +161,7 @@ string CStateVariable::GetStateVarLongName(const sv_type typ, const int layerind
   case(COLD_CONTENT):       {name="Cold Content";               break;}
   case(SOIL_TEMP):          {name="Temperature of soil";        break;}
   case(CANOPY_TEMP):        {name="Temperature of canopy";      break;}
+  case(SOIL_PCT_FROZ):      {name="Frozen soil percentage";     break;}
 
     //Snow variables
   case(SNOW_DEPTH):         {name="Snow depth";                 break;}
@@ -277,6 +278,7 @@ string CStateVariable::GetStateVarUnits(const sv_type typ)
   case(COLD_CONTENT):     {units="C";   break;}
   case(SOIL_TEMP):        {units="C";   break;}
   case(CANOPY_TEMP):      {units="C";   break;}
+  case(SOIL_PCT_FROZ):    {units="0-1"; break;}
 
     //Snow variables
   case(SNOW_DEPTH):       {units="mm";   break;}
@@ -355,6 +357,7 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   else if (!tmp.compare("GROUND_WATER"    )){typ=GROUNDWATER;}
   else if (!tmp.compare("GWMODEL"         )){typ=GROUNDWATER;}
   else if (!tmp.compare("AQUIFER"         )){typ=GROUNDWATER;}
+  else if (!tmp.compare("CUM_INFIL"       )){typ=CUM_INFIL;}
   else if (!tmp.compare("CANOPY"          )){typ=CANOPY;}
   else if (!tmp.compare("CANOPYSNOW"      )){typ=CANOPY_SNOW;}
   else if (!tmp.compare("CANOPY_SNOW"     )){typ=CANOPY_SNOW;}
@@ -382,6 +385,7 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   else if (!tmp.compare("SNODRIFT_TEMP"   )){typ=SNODRIFT_TEMP;}
   else if (!tmp.compare("SNOW_DRIFT"      )){typ=SNOW_DRIFT;}
   else if (!tmp.compare("ICE_THICKNESS"   )){typ=ICE_THICKNESS;}
+  else if (!tmp.compare("SOIL_PCT_FROZ"   )){typ=SOIL_PCT_FROZ;}
   else if (!tmp.compare("GLACIER"         )){typ=GLACIER;}
   else if (!tmp.compare("GLACIER_ICE"     )){typ=GLACIER_ICE;}
   else if (!tmp.compare("GLACIER_CC"      )){typ=GLACIER_CC;}
@@ -389,7 +393,6 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   else if (!tmp.compare("FIRN"            )){typ=FIRN;}
   else if (!tmp.compare("FIRN_GRAVITY"    )){typ=FIRN_GRAVITY;}
   else if (!tmp.compare("CUM_SNOWMELT"    )){typ=CUM_SNOWMELT;}
-  else if (!tmp.compare("SNOW_TEMP"       )){typ=SNOW_TEMP;}
   else if (!tmp.compare("SNOW_ALBEDO"     )){typ=SNOW_ALBEDO;}
   else if (!tmp.compare("CROP_HEAT_UNITS" )){typ=CROP_HEAT_UNITS;}
   else if (!tmp.compare("CUM_INFIL"       )){typ=CUM_INFIL;}
@@ -397,6 +400,7 @@ sv_type CStateVariable::StringToSVType(const string s, int &layer_index,bool str
   else if (!tmp.compare("CONV_STOR"       )){typ=CONV_STOR;}
   else if (!tmp.compare("GA_MOISTURE_INIT")){typ=GA_MOISTURE_INIT;}
   else if (!tmp.compare("LATERAL_EXCHANGE")){typ=LATERAL_EXCHANGE;}
+  else if (!tmp.compare("SOIL_TEMP"       )){typ=SOIL_TEMP;}
 
   else if (!tmp.compare("AET"             )){typ=AET; }
   else if (!tmp.compare("RUNOFF"          )){typ=RUNOFF; }
@@ -473,6 +477,7 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
     case(COLD_CONTENT):       {name="COLD_CONTENT";             break;}
     case(SOIL_TEMP):          {name="SOIL_TEMP";                break;}
     case(CANOPY_TEMP):        {name="CANOPY_TEMP";              break;}
+    case(SOIL_PCT_FROZ):      {name="SOIL_PCT_FROZ";            break;}
 
     //Snow variables
     case(SNOW_DEPTH):         {name="SNOW_DEPTH";               break;}
@@ -512,6 +517,7 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
     //Transport variables
     case(CONSTITUENT):    {
       name = "!" + this->_pTransportModel->GetConstituentTypeName(layerindex); //e.g., !Nitrogen[3]
+      //overridden below
       break;
     }
     case(CONSTITUENT_SRC):    {
@@ -538,20 +544,24 @@ string CStateVariable::SVTypeToString(const sv_type typ, const int layerindex)
       break;
     }
   }
-  //multilayer variables
-  if ((typ==SOIL) || (typ==SOIL_TEMP)   ||
-    (typ==CONVOLUTION) || (typ==CONV_STOR) || (typ==LATERAL_EXCHANGE))
+  if(typ==CONSTITUENT) //e.g., !Nitrogen|SOIL[0]
   {
-    name=name+"["+to_string(layerindex)+"]";
-  }
-  else if (typ==CONSTITUENT){
     int iWat=this->_pTransportModel->GetWaterStorIndexFromLayer(layerindex);
     sv_type typ=_pModel->GetStateVarType(iWat);
     int lay=_pModel->GetStateVarLayer(iWat);
     string Wat=SVTypeToString(typ,lay);
-    name=name+"_"+Wat;
+    name=name+"|"+Wat;
   }
-  if (((typ==SNOW) || (typ==SNOW_LIQ) || (typ==COLD_CONTENT) || (typ==GROUNDWATER)) && (layerindex>0)){
+  //always multilayer variables
+  if ((typ==SOIL) || (typ==SOIL_TEMP)   ||
+      (typ==CONVOLUTION) || (typ==CONV_STOR) || (typ==LATERAL_EXCHANGE))
+  {
+    name=name+"["+to_string(layerindex)+"]";
+  }
+  //sometimes multilayer variables
+  else if ((layerindex>0) && ((typ==SNOW) || (typ==SNOW_LIQ) || (typ==COLD_CONTENT) ||
+           (typ==GROUNDWATER) || (typ==DEPRESSION)) )
+  {
     name=name+"["+to_string(layerindex)+"]";
   }
   return name;
@@ -582,13 +592,8 @@ string CStateVariable::SVStringBreak(const string s, int &num)
   pch  = strpbrk (ss, key1); //pch is now pointer to '[' character
   pch2 = strpbrk (ss, key2); //pch is now pointer to ']' character
   if ((pch==NULL) || (pch2==NULL)){num=0;return s;}//one or both brackets missing - layer = 0
-#if defined (__APPLE__) || defined (__CYGWIN__)
-  strxfrm(tmp,ss,pch-ss+1);
-  strxfrm(tmp2,pch+1,pch2-pch);
-#else
-  strxfrm(tmp,ss,pch-ss);          //Extract type (e.g., "SOIL" from "SOIL[13]")
-  strxfrm(tmp2,pch+1,pch2-pch-1);  //Extract index (e.g., "13" from "SOIL[13]")
-#endif
+  strncpy(tmp, ss, pch-ss);          //Extract type (e.g., "SOIL" from "SOIL[13]")
+  strncpy(tmp2, pch+1, pch2-pch-1);  //Extract index (e.g., "13" from "SOIL[13]")
   //cout<<tmp2<<endl;
   for(int i = 0; i < (int)(strlen(tmp2)); ++i) {
     if(!isdigit(tmp2[i])) {
@@ -633,24 +638,6 @@ bool  CStateVariable::IsWaterStorage (sv_type      typ, bool conv_coverup)
   case(SNOW_DRIFT):      {return true;}
   case(LAKE_STORAGE):    {return true;}
   //..
-  default:
-  {
-    return false;
-  }
-  }
-}
-
-//////////////////////////////////////////////////////////////////
-/// \brief Returns true if the state variable is an energy storage unit
-/// \param typ [in] State variable identifier
-/// \return Boolean indicating if the passed state variable is an energy storage unit
-bool  CStateVariable::IsEnergyStorage (sv_type      typ)
-{
-  switch(typ)
-  {
-  case(COLD_CONTENT):   {return true;}
-  case(ENERGY_LOSSES):  {return true;}
-    //..
   default:
   {
     return false;

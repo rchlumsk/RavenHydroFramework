@@ -177,7 +177,7 @@ double CmvPrairieBlowingSnow::ProbabilityThreshold( const double &snow_depth, //
                                                     const double &tstep) const
 {
   double u_mean(0.0),u_stddev(7.0);
-  double prob(0.0);                 
+  double prob(0.0);
   bool   snow_is_dry=(snow_age<REAL_SMALL);
 
   u_thresh   =9.43+0.180*T+0.00330*T*T;    //[m/s] (overriden for wet snow)
@@ -247,10 +247,10 @@ void CmvPrairieBlowingSnow::PBSMrates(const double stubble_ht, // stubble height
                                       const double veg_dens,   // [count/m2] Vegetation density
                                       const double veg_diam,   // [m] Vegetation diameter
                                             double &DriftH,    // [kg/m/s]
-                                            double &SublH) const  //[kg/m2/s] 
+                                            double &SublH) const  //[kg/m2/s]
 
 {
-  const double VEGETATION_BETA=170; 
+  const double VEGETATION_BETA=170;
   const double REF_FETCH=300; //XD [m]
   const double z_d=0.3; //[m]
 
@@ -292,7 +292,7 @@ void CmvPrairieBlowingSnow::PBSMrates(const double stubble_ht, // stubble height
 
     Qsalt  =C1*DENSITY_AIR*u_star_th/(GRAVITY*C3*u_star)*(u_star*u_star*RaupachTerm-u_star_th*u_star_th);// (should be [kg/m/s]; is [kg/m2]) Pomeroy1988 Eq. 4.20 (Eqn 2 MacDonaldEtAl2009)
     //UNITS DONT WORK OUT FOR EITHER Nsalt or Qsalt IN MESH CODE - DIVISION BY C3*Ustar not in Pomeroy1988
-    //Above would work out if C3 implicitly has units of s/m  
+    //Above would work out if C3 implicitly has units of s/m
     //Confirmed - this is the same as CRHM
 
     double Mpr, alpha, rel_hum_z, Vsalt,Hsalt;
@@ -329,11 +329,11 @@ void CmvPrairieBlowingSnow::PBSMrates(const double stubble_ht, // stubble height
     // find height of fully-developed boundary layer for turbulent diffusion, z_p
     //-------------------------------------------------------------------------
     double z_p=z_d; //[m] (default for small fetch)
-    
-    if  (Fetch>REF_FETCH) 
+
+    if  (Fetch>REF_FETCH)
     {
       double z_p_last;
-      double term=162.926/(u_star*u_star);  
+      double term=162.926/(u_star*u_star);
       z_p=1.0;//initial guess [m]
       do {
         z_p_last=z_p;

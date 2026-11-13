@@ -1132,7 +1132,7 @@ double CDiagnostic::CalculateDiagnostic(CTimeSeriesABC  *pTSMod,
         N += weight;
 
         JulianConvert(nn*Options.timestep,Options.julian_start_day,Options.julian_start_year,Options.calendar,tt);
-        
+
         string date_str=to_string(Options.wateryr_mo)+to_string(tt.year);
         if (Options.wateryr_mo<10) { date_str="0"+date_str; }
         int julianWD=GetJulianDayFromMonthYear(date_str,Options.calendar);
@@ -1141,7 +1141,7 @@ double CDiagnostic::CalculateDiagnostic(CTimeSeriesABC  *pTSMod,
           AvgAnnDiff+=fabs(ModSum-ObsYrSum);
           ObsYrSum=0.0;
           ModSum=0.0;
-        } 
+        }
       }
       Beta = 1.0 - AvgAnnDiff / ObsSum; //use the average annual difference
     }

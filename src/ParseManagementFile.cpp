@@ -103,9 +103,9 @@ void ParseManagementFile(CModel *&pModel, optStruct &Options)
   pDO->Initialize(pModel,Options); //only requires rvh,.rvt read
 
   if(Options.noisy) {
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
     cout <<"Parsing Model Management File " << Options.rvm_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
   }
 
   //--Sift through file-----------------------------------------------

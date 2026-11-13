@@ -40,9 +40,9 @@ bool ParseEnsembleFile(CModel *&pModel,const optStruct &Options)
   CEnsemble *pEnsemble=pModel->GetEnsemble();
 
   if(Options.noisy) {
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
     cout <<"Parsing Model Ensemble File " << Options.rve_filename <<"..."<<endl;
-    cout <<"======================================================"<<endl;
+    cout <<"============================================================="<<endl;
   }
 
   //--Sift through file-----------------------------------------------

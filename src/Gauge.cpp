@@ -159,12 +159,12 @@ void CGauge::Initialize(const optStruct   &Options,
       for(int nn=0;nn<nSamples; nn++)
       {
         val=_pTimeSeries[index]->GetSampledValue(nn);
-        if(val==RAV_BLANK_DATA){
+        if((val==RAV_BLANK_DATA) && (!Options.forcing_slider)){
           ExitGracefully("CGauge::Initialize: Raven cannot have blank data in precipitation time series",BAD_DATA);
         }
-        if((val<-1e-6) || (val>10000)){
+        else if((val!=RAV_BLANK_DATA) && ((val<-1e-6) || (val>50000))){
           cout<<GetName()<<" "<<nn<<" "<<val<<endl;
-          ExitGracefully("CGauge::Initialize: negative or excessively large (>10000mm/d) precipitation intensity reported at gauge",BAD_DATA);
+          ExitGracefully("CGauge::Initialize: negative or excessively large (>50000mm/d) precipitation intensity reported at gauge",BAD_DATA);
         }
       }
     }
@@ -178,7 +178,7 @@ void CGauge::Initialize(const optStruct   &Options,
       for(int nn=0;nn<nSamples; nn++)
       {
         val=_pTimeSeries[index]->GetSampledValue(nn);
-	      if (val==RAV_BLANK_DATA && !(derivedAveTemp)){
+	      if ((val==RAV_BLANK_DATA) && !(derivedAveTemp) && (!Options.forcing_slider)){
           string warning;
           warning ="CGauge::Initialize: Raven cannot have blank data in daily temperature time series (Gauge: "+_name+", n="+to_string(nn)+")";
           ExitGracefully(warning.c_str(),BAD_DATA);
@@ -248,17 +248,19 @@ void CGauge::Initialize(const optStruct   &Options,
     }
   }
 
-  WarnAboutForcing(Options.SW_radiation  ==SW_RAD_DATA,   F_SW_RADIA);
-  WarnAboutForcing(Options.SW_radia_net  ==NETSWRAD_DATA, F_SW_RADIA_NET);
-  WarnAboutForcing(Options.LW_radiation  ==LW_RAD_DATA,   F_LW_RADIA_NET);
-  WarnAboutForcing(Options.LW_incoming   ==LW_INC_DATA,   F_LW_INCOMING);
-  WarnAboutForcing(Options.cloud_cover   ==CLOUDCOV_DATA, F_CLOUD_COVER);
-  WarnAboutForcing(Options.ow_evaporation==PET_DATA,      F_OW_PET);
-  WarnAboutForcing(Options.evaporation   ==PET_DATA,      F_PET);
-  WarnAboutForcing(Options.pot_melt      ==POTMELT_DATA,  F_POTENTIAL_MELT);
-  WarnAboutForcing(Options.rel_humidity  ==RELHUM_DATA,   F_REL_HUMIDITY);
-  WarnAboutForcing(Options.air_pressure  ==AIRPRESS_DATA, F_AIR_PRES);
-  WarnAboutForcing(Options.wind_velocity ==WINDVEL_DATA,  F_WIND_VEL);
+  WarnAboutForcing(Options.SW_radiation  ==SW_RAD_DATA,     F_SW_RADIA);
+  WarnAboutForcing(Options.SW_radia_net  ==NETSWRAD_DATA,   F_SW_RADIA_NET);
+  WarnAboutForcing(Options.SW_radia_diff ==DIFFSWRAD_DATA,  F_SW_RADIA_DIFF);
+  WarnAboutForcing(Options.SW_radia_diff ==DIFFSWRAD_DIRECT,F_SW_RADIA_DIRECT);
+  WarnAboutForcing(Options.LW_radiation  ==LW_RAD_DATA,     F_LW_RADIA_NET);
+  WarnAboutForcing(Options.LW_incoming   ==LW_INC_DATA,     F_LW_INCOMING);
+  WarnAboutForcing(Options.cloud_cover   ==CLOUDCOV_DATA,   F_CLOUD_COVER);
+  WarnAboutForcing(Options.ow_evaporation==PET_DATA,        F_OW_PET);
+  WarnAboutForcing(Options.evaporation   ==PET_DATA,        F_PET);
+  WarnAboutForcing(Options.pot_melt      ==POTMELT_DATA,    F_POTENTIAL_MELT);
+  WarnAboutForcing(Options.rel_humidity  ==RELHUM_DATA,     F_REL_HUMIDITY);
+  WarnAboutForcing(Options.air_pressure  ==AIRPRESS_DATA,   F_AIR_PRES);
+  WarnAboutForcing(Options.wind_velocity ==WINDVEL_DATA,    F_WIND_VEL);
 
   // Check for monthly values, when needed
   //--------------------------------------------------------------------------
@@ -302,7 +304,7 @@ void CGauge::WarnAboutForcing(bool is_needed, const forcing_type ftype) const
 
   //check for FROM_DATA without data or vice versa
   if ((is_needed) && (GetTimeSeries(ftype) == NULL)){
-    errmsg = "USE_DATA is specified as the means of generating "+ForcingToString(ftype) +", but no data is provided at gauge " + this->_name;
+    errmsg = "USE_DATA is specified as the means of generating "+ForcingToString(ftype) +", but no correspondind forcing data is provided at gauge " + this->_name;
     ExitGracefully(errmsg.c_str(),BAD_DATA_WARN);
   }
   else if ((GetTimeSeries(ftype) != NULL) && (!is_needed)){
@@ -349,7 +351,7 @@ bool     CGauge::SetGaugeProperty          (const string prop_tag, const double 
   string label_n = StringToUppercase(prop_tag);
   if      (!label_n.compare("RAINFALL_CORR"   ))  {_rainfall_corr=value;}
   else if (!label_n.compare("SNOWFALL_CORR"   ))  {_snowfall_corr=value;}
-  else if (!label_n.compare("TEMP_CORR"       ))  { _temperature_corr=value; }
+  else if (!label_n.compare("TEMP_CORR"       ))  {_temperature_corr=value; }
   else if (!label_n.compare("ELEVATION"       ))  {_elevation=value;}
   else if (!label_n.compare("CLOUD_MIN_RANGE" ))  {_cloud_min_temp=value;}
   else if (!label_n.compare("CLOUD_MAX_RANGE" ))  {_cloud_max_temp=value;}
@@ -376,8 +378,7 @@ void CGauge::AddTimeSeries      (CTimeSeries *pTS, forcing_type ftype)
   int index=_aTSindex[(int)(ftype)];
   if (index!=DOESNT_EXIST)//overwriting existing time series
   {
-    cout <<"ftype : "<<ftype<<" Forcing: "<<ForcingToString(ftype)<<endl;
-    string warn="CGauge::AddTimeSeries: a time series of data has been overwritten at gauge "+_name;
+    string warn="CGauge::AddTimeSeries: a time series of data of type "+ForcingToString(ftype)+ "has been overwritten at gauge "+_name;
     WriteWarning(warn,true);
     delete _pTimeSeries[index]; _pTimeSeries[index]=pTS;
   }

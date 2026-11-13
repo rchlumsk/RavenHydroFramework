@@ -1283,7 +1283,7 @@ void CDemandOptimizer::AddReservoirConstraints(const optStruct &Options)
 /// \brief Updates workflow variables
 /// called every time step by SolveManagementProblem() prior to solve
 //
-void CDemandOptimizer::UpdateWorkflowVariables(const time_struct &tt,const optStruct &Options)
+void CDemandOptimizer::UpdateWorkflowVariables(const time_struct &tt,const optStruct &Options, int iter)
 {
   double t=tt.model_time;
   bool op_is_active;
@@ -1299,7 +1299,9 @@ void CDemandOptimizer::UpdateWorkflowVariables(const time_struct &tt,const optSt
       }
     }
     if (active_regime!=DOESNT_EXIST){
-      _pWorkflowVars[i]->current_val=EvaluateExpression(_pWorkflowVars[i]->pOperRegimes[active_regime]->pExpression, t, true);
+      if ((_pWorkflowVars[i]->iterate) || (iter==0)){
+        _pWorkflowVars[i]->current_val=EvaluateExpression(_pWorkflowVars[i]->pOperRegimes[active_regime]->pExpression,t,true);
+      }
     }
   }
 }
@@ -1391,7 +1393,7 @@ void CDemandOptimizer::PrepDemandProblem(CModel *pModel, const optStruct &Option
 
   // evaluates value of all workflow variables for this time step
   // ----------------------------------------------------------------
-  UpdateWorkflowVariables(tt,Options);
+  UpdateWorkflowVariables(tt,Options,0);
 }
 //////////////////////////////////////////////////////////////////
 /// \brief Solves demand optimization problem
@@ -2196,8 +2198,8 @@ void CDemandOptimizer::SolveManagementProblem(CModel *pModel, const optStruct &O
     // ----------------------------------------------------------------
     if ((retval!=OPTIMAL) && (nInfeasibleIters>1)) //Only complain if we run into infeasibility more than once this tstep
     {
-      if ((Options.soft_convergence) && (retval==NUMFAILURE)) { return; } // THE 'DO NOTHING' STRATEGY
-      
+      if ((Options.soft_convergence) && (retval==NUMFAILURE)) { return; } // THE 'DO NOTHING' STRATEGY (WORKS PRETTY WELL :))
+
 //solid 14-yr old discussion here on strategies for non-convergence https://lp-solve.yahoogroups.narkive.com/wdApmSVe/problems-with-infeasibility
       string code="";
       if      (retval==INFEASIBLE   ){code="INFEASIBLE"; }
@@ -2206,9 +2208,9 @@ void CDemandOptimizer::SolveManagementProblem(CModel *pModel, const optStruct &O
       else if (retval==ACCURACYERROR){code="ACCURACY ERROR"; }
       else if (retval==NUMFAILURE   ){code="NUMERICAL FAILURE"; }
 
-      cout<<"=========================================="<<endl;
-      cout<<"LP SOLVE CANNOT SOLVE OPTIMIZATION PROBLEM"<<endl;
-      cout<<"=========================================="<<endl;
+      cout<<"============================================================="<<endl;
+      cout<<"LP SOLVE CANNOT SOLVE OPTIMIZATION PROBLEM"                   <<endl;
+      cout<<"============================================================="<<endl;
       cout<<"Diagnostics:"<<endl;
       cout<<"  lp_lib::solve error code: "<<retval<<" ("<<code<<")"<<endl;
       cout<<"  lp accuracy: "<<lp_lib::get_accuracy(pLinProg)<<endl;
@@ -2445,7 +2447,7 @@ void CDemandOptimizer::SolveManagementProblem(CModel *pModel, const optStruct &O
     }
     // adjust workflow variables to respond to non-linear DVs
     // ----------------------------------------------------------------------------
-    UpdateWorkflowVariables(tt,Options);
+    UpdateWorkflowVariables(tt,Options,1);
 
     //lp_lib::reset_basis(pLinProg); //JRC: may have value here
 

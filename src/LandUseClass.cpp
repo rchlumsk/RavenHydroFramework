@@ -273,6 +273,10 @@ void CLandUseClass::AutoCalculateLandUseProps(surface_struct &Stmp,
   if(autocalc) {
     S.divert_fract = 0.0;
   }
+  autocalc = SetCalculableValue(S.sublim_corr,Stmp.sublim_corr,Sdefault.sublim_corr);
+  if(autocalc) {
+    S.sublim_corr = 1.0;
+  }
 
   /*for(i=0;i<N_LU_PARAMETERS;i++) {
   if (!S.params[i].iscomputable){
@@ -334,6 +338,7 @@ void CLandUseClass::AutoCalculateLandUseProps(surface_struct &Stmp,
   SetSpecifiedValue(S.HMETS_runoff_coeff,Stmp.HMETS_runoff_coeff,Sdefault.HMETS_runoff_coeff,needed,"HMETS_RUNOFF_COEFF");
   SetSpecifiedValue(S.bsnow_distrib,Stmp.bsnow_distrib,Sdefault.bsnow_distrib,needed,"BSNOW_DISTRIB");
   SetSpecifiedValue(S.lakesnow_buffer_ht,Stmp.lakesnow_buffer_ht,Sdefault.lakesnow_buffer_ht,needed,"LAKESNOW_BUFFER_HT");
+  SetSpecifiedValue(S.snow_dampen_coeff,Stmp.snow_dampen_coeff,Sdefault.snow_dampen_coeff,needed,"SNOW_DAMPEN_COEFF");
   SetSpecifiedValue(S.convection_coeff,Stmp.convection_coeff,Sdefault.convection_coeff,needed,"CONVECTION_COEFF");
   SetSpecifiedValue(S.pet_lin_coeff,Stmp.pet_lin_coeff,Sdefault.pet_lin_coeff,needed,"PET_LIN_COEFF");
   SetSpecifiedValue(S.pet_vap_coeff,Stmp.pet_vap_coeff,Sdefault.pet_vap_coeff,needed,"PET_VAP_COEFF");
@@ -401,6 +406,7 @@ void CLandUseClass::InitializeSurfaceProperties(string name, surface_struct &S, 
   S.relhum_corr      =DefaultParameterValue(is_template,true);//1.0
   S.wind_vel_corr    =DefaultParameterValue(is_template,true);//1.0
   S.divert_fract     =DefaultParameterValue(is_template,true);//0.0
+  S.sublim_corr      =DefaultParameterValue(is_template,true);//1.0
 
   //User-specified parameters
   S.partition_coeff   =DefaultParameterValue(is_template,false);//0.4;//needs reasonable defaults
@@ -428,7 +434,7 @@ void CLandUseClass::InitializeSurfaceProperties(string name, surface_struct &S, 
   S.HGDM_large_areafrac=DefaultParameterValue(is_template,false);           //[0..1]
   S.HGDM_small_areafrac=DefaultParameterValue(is_template,false);           //[0..1]
   S.HGDM_p            =DefaultParameterValue(is_template,false);//1.2
-  S.HGDM_p_large      =DefaultParameterValue(is_template,false);//2     
+  S.HGDM_p_large      =DefaultParameterValue(is_template,false);//2
 
   S.dep_threshold     =DefaultParameterValue(is_template,false);//1.5;      //[mm]
   S.lake_rel_coeff    =DefaultParameterValue(is_template,false);//0.3;      //[1/d]
@@ -453,6 +459,7 @@ void CLandUseClass::InitializeSurfaceProperties(string name, surface_struct &S, 
   S.HMETS_runoff_coeff=DefaultParameterValue(is_template,false);//0.4
   S.bsnow_distrib     =DefaultParameterValue(is_template,false);//0.4
   S.lakesnow_buffer_ht=DefaultParameterValue(is_template,false);//50 mm
+  S.snow_dampen_coeff =DefaultParameterValue(is_template,false);//3/m [1-8/m]
   S.convection_coeff  =DefaultParameterValue(is_template,false);//~2
   S.pet_lin_coeff     =DefaultParameterValue(is_template,false);//~0.1-0.3
   S.pet_vap_coeff     =DefaultParameterValue(is_template,false);//~1-3
@@ -554,6 +561,7 @@ void  CLandUseClass::SetSurfaceProperty(surface_struct &S,
   else if (!name.compare("RELHUM_CORR"            )){S.relhum_corr=value;}
   else if (!name.compare("WINDVEL_CORR"           )){S.wind_vel_corr=value;}
   else if (!name.compare("WIND_VEL_CORR"          )){S.wind_vel_corr=value;}
+  else if (!name.compare("SUBLIM_CORR"            )){S.sublim_corr=value;}
   else if (!name.compare("GR4J_X4"                )){S.GR4J_x4=value;}
   else if (!name.compare("UBC_ICEPT_FACTOR"       )){S.UBC_icept_factor=value;}
   else if (!name.compare("WIND_EXPOSURE"          )){S.wind_exposure=value;}
@@ -566,6 +574,7 @@ void  CLandUseClass::SetSurfaceProperty(surface_struct &S,
   else if (!name.compare("HMETS_RUNOFF_COEFF"     )){S.HMETS_runoff_coeff=value; }
   else if (!name.compare("BSNOW_DISTRIB"          )){S.bsnow_distrib=value;}
   else if (!name.compare("LAKESNOW_BUFFER_HT"     )){S.lakesnow_buffer_ht=value;}
+  else if (!name.compare("SNOW_DAMPEN_COEFF"      )){S.snow_dampen_coeff=value;}
   else if (!name.compare("SKY_VIEW_FACTOR"        )){S.sky_view_factor=value;}
   else if (!name.compare("CONVECTION_COEFF"       )){S.convection_coeff=value;}
   else if (!name.compare("GEOTHERMAL_GRAD"        )){S.geothermal_grad=value;}
@@ -670,6 +679,7 @@ double CLandUseClass::GetSurfaceProperty(const surface_struct &S, string param_n
   else if (!name.compare("RELHUM_CORR"            )){return S.relhum_corr;}
   else if (!name.compare("WINDVEL_CORR"           )){return S.wind_vel_corr;}
   else if (!name.compare("WIND_VEL_CORR"          )){return S.wind_vel_corr;}
+  else if (!name.compare("SUBLIM_CORR"            )){return S.sublim_corr;}
   else if (!name.compare("GR4J_X4"                )){return S.GR4J_x4;}
   else if (!name.compare("UBC_ICEPT_FACTOR"       )){return S.UBC_icept_factor;}
   else if (!name.compare("WIND_EXPOSURE"          )){return S.wind_exposure;}
@@ -682,6 +692,7 @@ double CLandUseClass::GetSurfaceProperty(const surface_struct &S, string param_n
   else if (!name.compare("HMETS_RUNOFF_COEFF"     )){return S.HMETS_runoff_coeff; }
   else if (!name.compare("BSNOW_DISTRIB"          )){return S.bsnow_distrib; }
   else if (!name.compare("LAKESNOW_BUFFER_HT"     )){return S.lakesnow_buffer_ht; }
+  else if (!name.compare("SNOW_DAMPEN_COEFF"      )){return S.snow_dampen_coeff; }
   else if (!name.compare("SKY_VIEW_FACTOR"        )){return S.sky_view_factor; }
   else if (!name.compare("CONVECTION_COEFF"       )){return S.convection_coeff; }
   else if (!name.compare("GEOTHERMAL_GRAD"        )){return S.geothermal_grad; }
