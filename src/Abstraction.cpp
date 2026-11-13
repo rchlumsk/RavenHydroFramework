@@ -391,8 +391,8 @@ void   CmvAbstraction::GetRatesOfChange( const double        *state_vars,
     double flu     =pHRU->GetSurfaceProps()->HGDM_frac_large;     //[0..1] fraction of HRU covered in large depression + contrib areas of large depression
     double fl      =pHRU->GetSurfaceProps()->HGDM_large_areafrac; //[0..1] fraction of HRU covered by maximum area of large depression // fl < flu
     double fs      =pHRU->GetSurfaceProps()->HGDM_small_areafrac; //[0..1] fraction of HRU covered by maximum area of small depressions
-    double p       =pHRU->GetSurfaceProps()->HGDM_p;
-    double p_large =pHRU->GetSurfaceProps()->HGDM_p_large;
+    double p       =pHRU->GetSurfaceProps()->HGDM_p;              // [-] shape parameter for equivalent depression
+    double p_large =pHRU->GetSurfaceProps()->HGDM_p_large;        // [-] shape parameter for large depression 
 
     double fsu     =(1.0-flu);                                    //[0..1] fraction of depression landscape contributing to small depressions
     double fsu_to_o=(1.0-fsu_to_l);                               //[0..1] fraction of non-large contributing depression landscape draining to outlet
